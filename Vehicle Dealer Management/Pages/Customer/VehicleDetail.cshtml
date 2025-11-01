@@ -1,0 +1,220 @@
+@page "/Customer/VehicleDetail"
+@model Vehicle_Dealer_Management.Pages.Customer.VehicleDetailModel
+@{
+    ViewData["Title"] = "@Model.Vehicle.ModelName - @Model.Vehicle.VariantName";
+    ViewData["UserRole"] = "CUSTOMER";
+    ViewData["UserName"] = HttpContext.Session.GetString("UserName") ?? "Customer";
+}
+
+<div class="content-header">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="content-title">@Model.Vehicle.ModelName @Model.Vehicle.VariantName</h1>
+            <p class="content-subtitle">Khám phá chi tiết mẫu xe</p>
+        </div>
+        <a href="/Customer/Vehicles" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+    </div>
+</div>
+
+<div class="grid grid-cols-2 gap-4">
+    <!-- Left Column: Image & Specs -->
+    <div>
+        <!-- Vehicle Image -->
+        <div class="card mb-4">
+            <div class="card-body" style="padding: 0;">
+                <img src="@Model.Vehicle.ImageUrl" alt="@Model.Vehicle.ModelName" 
+                     style="width: 100%; height: auto; border-radius: var(--radius) var(--radius) 0 0; object-fit: cover; max-height: 500px;" />
+                <div style="padding: 1.5rem;">
+                    <div class="flex justify-between items-center mb-3">
+                        <div>
+                            <h3 style="margin-bottom: 0.25rem;">@Model.Vehicle.ModelName</h3>
+                            <p class="text-muted">@Model.Vehicle.VariantName</p>
+                        </div>
+                        @await Html.PartialAsync("_StatusBadge", Model.Vehicle.Status)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Specifications -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Thông số kỹ thuật</h3>
+            </div>
+            <div class="card-body">
+                @if (Model.Vehicle.Specs.Any())
+                {
+                    <div class="table-container">
+                        <table class="table">
+                            <tbody>
+                                @foreach (var spec in Model.Vehicle.Specs)
+                                {
+                                    <tr>
+                                        <td style="width: 40%;"><strong>@spec.Key</strong></td>
+                                        <td>@spec.Value</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted">Chưa có thông tin thông số kỹ thuật</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Pricing & Actions -->
+    <div>
+        <!-- Pricing -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title">Giá bán</h3>
+            </div>
+            <div class="card-body">
+                <div style="padding: 2rem; background: var(--black); border-radius: var(--radius-sm); text-align: center;">
+                    <div class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.5rem;">Giá từ</div>
+                    <div style="font-size: 2.5rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 1rem;">
+                        @Model.Vehicle.Price.ToString("N0") VND
+                    </div>
+                    <p class="text-muted" style="font-size: 0.875rem;">Giá có thể thay đổi tùy theo khuyến mãi và đại lý</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title">Thao tác nhanh</h3>
+            </div>
+            <div class="card-body">
+                <div class="grid grid-cols-1 gap-2">
+                    <a href="/Dealer/Sales/CreateQuote?vehicleId=@Model.Vehicle.Id" class="btn btn-primary" style="width: 100%;">
+                        <i class="bi bi-file-text"></i> Yêu cầu báo giá
+                    </a>
+                    <button class="btn btn-secondary" onclick="document.getElementById('testDriveModal').style.display='flex'" style="width: 100%;">
+                        <i class="bi bi-calendar-check"></i> Đặt lịch lái thử
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Available Dealers -->
+        @if (Model.Vehicle.Dealers.Any())
+        {
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Đại lý có sẵn</h3>
+                </div>
+                <div class="card-body">
+                    <div class="grid grid-cols-1 gap-2">
+                        @foreach (var dealer in Model.Vehicle.Dealers.Take(3))
+                        {
+                            <div style="padding: 1rem; background: var(--black); border-radius: var(--radius-sm);">
+                                <div style="font-weight: 600; margin-bottom: 0.25rem;">@dealer.Name</div>
+                                <div class="text-muted" style="font-size: 0.875rem;">@dealer.Address</div>
+                                <div class="text-muted" style="font-size: 0.875rem;"><i class="bi bi-telephone"></i> @dealer.Phone</div>
+                            </div>
+                        }
+                        @if (Model.Vehicle.Dealers.Count > 3)
+                        {
+                            <p class="text-muted" style="text-align: center; font-size: 0.875rem;">
+                                và @(Model.Vehicle.Dealers.Count - 3) đại lý khác
+                            </p>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Test Drive Modal -->
+<div id="testDriveModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Đặt lịch lái thử</h3>
+            <button class="modal-close" onclick="document.getElementById('testDriveModal').style.display='none'">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p class="text-muted">Form đặt lịch lái thử sẽ redirect đến trang Test Drive booking...</p>
+            <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('testDriveModal').style.display='none'">
+                    Hủy
+                </button>
+                <a href="/Customer/TestDrive?vehicleId=@Model.Vehicle.Id" class="btn btn-primary">
+                    <i class="bi bi-calendar-check"></i> Đặt lịch ngay
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            color: var(--text-heading);
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-close:hover {
+            color: var(--error);
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+    </style>
+}
+

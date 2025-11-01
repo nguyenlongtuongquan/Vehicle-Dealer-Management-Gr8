@@ -22,15 +22,18 @@
 - [x] **Customer UI:** Vehicles catalog, MyQuotes, MyOrders, TestDrive booking
 - [x] Public pages: Home, Login, Register, Profile
 
-### ⚠️ Đang làm (In Progress - UI-First)
-- [ ] Detail Pages: OrderDetail (Dealer & Customer), QuoteDetail (Dealer), Vehicle Detail (Dealer & Customer)
+### ✅ Vừa hoàn thành (Latest - UI-First)
+- [x] Detail Pages: OrderDetail (Dealer & Customer), QuoteDetail (Dealer) - Đọc dữ liệu thật từ DB
+- [x] Payment Management: Add Payment form với validation, auto update order status
+- [x] Delivery Management: Schedule Delivery form, Mark Delivered functionality
+- [x] Convert Quote to Order: Functional POST handler, copy all lines, redirect to OrderDetail
+- [x] Vehicle Detail Pages: Dealer & Customer - Specs, pricing, stock, actions buttons
 
-### ❌ Chưa có (Cần implement cho UI-First)
-- [ ] Payment Management UI: Payment entry forms, Payment history display
-- [ ] Delivery Management UI: Schedule delivery, Mark delivered, Delivery tracking
-- [ ] Create Order page (hiện chỉ có CreateQuote)
-- [ ] Vehicle Comparison feature
-- [ ] Promotion management UI (apply promotions to quotes/orders)
+### ❌ Chưa có (Optional - UI-First)
+- [ ] Create Order page (hiện có Convert Quote to Order, có thể không cần separate page)
+- [ ] Vehicle Comparison feature (nice to have)
+- [ ] Promotion management UI (apply promotions to quotes/orders) - Form hiện đã có dropdown
+- [ ] Edit Quote functionality (link đã có nhưng chưa implement)
 
 ---
 
@@ -198,12 +201,13 @@
   - ✅ Search box
   - ✅ Click vào card → detail page
   
-- [ ] **3.2.2** Vehicle detail page
-  - ✅ Image gallery (nếu có nhiều ảnh, hoặc 1 ảnh lớn)
-  - ✅ Specs table (từ SpecJson)
-  - ✅ Price hiển thị rõ ràng
-  - ✅ Stock availability (colors, quantities)
-  - ✅ Button "Tạo báo giá" ngay tại đây
+- [x] **3.2.2** Vehicle detail page
+  - ✅ Image gallery (1 ảnh lớn)
+  - ✅ Specs table (từ SpecJson - parsed từ JSON)
+  - ✅ Price hiển thị rõ ràng (MSRP cho Customer, MSRP + Wholesale cho Dealer)
+  - ✅ Stock availability (colors, quantities) - EVM stock cho Dealer
+  - ✅ Button "Tạo báo giá" cho Dealer, "Yêu cầu báo giá" + "Đặt lịch lái thử" cho Customer
+  - ✅ Available dealers list cho Customer
 
 ### 3.3 Sales Management (Core feature!) ⭐
 
@@ -215,10 +219,11 @@
   - ✅ Preview totals
   - ✅ Save as DRAFT hoặc SEND
   
-- [ ] **3.3.2** Quote list page
+- [x] **3.3.2** Quote list page
   - ✅ Table với status badges màu sắc
   - ✅ Filter: Status, Customer, Date
   - ✅ Actions: View, Edit, Convert to Order
+  - ✅ Convert to Order functionality: Copy quote lines → Create new ORDER với status OPEN
   
 - [ ] **3.3.3** Create Order page
   - ✅ Tương tự Quote, nhưng có payment terms
@@ -230,14 +235,18 @@
   - ✅ Button "Thêm thanh toán"
   - ✅ Button "Lên lịch giao xe"
   
-- [ ] **3.3.5** Payment entry (Modal hoặc separate page)
+- [x] **3.3.5** Payment entry (Modal hoặc separate page)
   - ✅ Method (CASH/FINANCE)
   - ✅ Amount input
   - ✅ Auto update order status
+  - ✅ Validation: amount > 0, không vượt quá remaining amount
+  - ✅ Auto update order status to PAID khi đủ tiền
   
-- [ ] **3.3.6** Delivery scheduling
+- [x] **3.3.6** Delivery scheduling
   - ✅ Date picker
+  - ✅ Time picker
   - ✅ Mark delivered với handover note
+  - ✅ Auto update order status to DELIVERED
 
 ### 3.4 Customer Management
 - [ ] **3.4.1** Customer list (table với search)
@@ -562,16 +571,17 @@ hr {
 
 ## 📋 Quick Checklist
 
-### Must Have (Demo được)
-- [x] Database 15 tables
-- [x] Authentication + 5 roles
-- [x] Vehicle Catalog (đẹp)
-- [x] Quote → Order workflow
-- [x] Payment tracking
-- [x] Delivery tracking
-- [x] Customer Portal (basic)
-- [x] EVM Product Management (basic)
-- [x] Admin Dashboard & Reports (basic)
+### Must Have (Demo được) - ✅ HOÀN THÀNH 100%
+- [x] Database 15 tables + Seed data
+- [x] Session-based Authentication + 5 roles
+- [x] Vehicle Catalog (đẹp) với Vehicle Detail pages
+- [x] Quote → Order workflow (Create Quote → Quote Detail → Convert to Order)
+- [x] Payment tracking (Add Payment form, history, auto status update)
+- [x] Delivery tracking (Schedule, Mark Delivered)
+- [x] Customer Portal (Vehicles, MyQuotes, MyOrders, TestDrive, OrderDetail với timeline)
+- [x] EVM Product Management (Vehicles, PricePolicies, Stocks, Dealers, DealerOrders)
+- [x] Admin Dashboard & Reports (Sales, Inventory, Consumption, Users)
+- [x] Dealer Manager Dashboard & Reports (SalesByStaff, Debts)
 
 ### Nice to Have (Nếu có thời gian)
 - [ ] Test Drive booking (UI đẹp)

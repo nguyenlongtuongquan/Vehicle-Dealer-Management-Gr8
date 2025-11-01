@@ -1,0 +1,321 @@
+@page "/Customer/OrderDetail"
+@model Vehicle_Dealer_Management.Pages.Customer.OrderDetailModel
+@{
+    ViewData["Title"] = "Chi tiết đơn hàng";
+    // UserRole and UserName are set in code-behind from Session
+}
+
+<div class="content-header">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="content-title">Chi tiết đơn hàng @Model.Order.OrderNumber</h1>
+            <p class="content-subtitle">Mã đơn: #@Model.Order.Id</p>
+        </div>
+        <a href="/Customer/MyOrders" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+    </div>
+</div>
+
+<!-- Order Status & Summary -->
+<div class="grid grid-cols-4 mb-4">
+    <div class="stat-card">
+        <div class="stat-label">Trạng thái</div>
+        <div>@await Html.PartialAsync("_StatusBadge", Model.Order.Status)</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Tổng tiền</div>
+        <div class="stat-value">@Model.Order.TotalAmount.ToString("N0") VND</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Đã thanh toán</div>
+        <div class="stat-value" style="color: var(--success);">@Model.Order.TotalPaid.ToString("N0") VND</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Còn lại</div>
+        <div class="stat-value" style="color: @(Model.Order.RemainingAmount > 0 ? "var(--error)" : "var(--success)");">
+            @Model.Order.RemainingAmount.ToString("N0") VND
+        </div>
+    </div>
+</div>
+
+<!-- Order Timeline (Visual Tracking) -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3 class="card-title">Tiến trình đơn hàng</h3>
+    </div>
+    <div class="card-body">
+        <div style="position: relative; padding-left: 2rem;">
+            <!-- Timeline line -->
+            <div style="position: absolute; left: 0.75rem; top: 0; bottom: 0; width: 2px; background: var(--border);"></div>
+            
+            <!-- Step 1: Order Created -->
+            <div style="position: relative; margin-bottom: 2rem;">
+                <div style="position: absolute; left: -1.625rem; top: 0.25rem; width: 1rem; height: 1rem; background: var(--success); border-radius: 50%; border: 3px solid var(--surface);"></div>
+                <div>
+                    <div style="font-weight: 600; margin-bottom: 0.25rem;">Đơn hàng đã được tạo</div>
+                    <div class="text-muted" style="font-size: 0.875rem;">@Model.Order.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                </div>
+            </div>
+
+            <!-- Step 2: Payment -->
+            @if (Model.Order.Payments.Any())
+            {
+                <div style="position: relative; margin-bottom: 2rem;">
+                    <div style="position: absolute; left: -1.625rem; top: 0.25rem; width: 1rem; height: 1rem; background: var(--success); border-radius: 50%; border: 3px solid var(--surface);"></div>
+                    <div>
+                        <div style="font-weight: 600; margin-bottom: 0.25rem;">Đã thanh toán</div>
+                        <div class="text-muted" style="font-size: 0.875rem;">
+                            @Model.Order.Payments.First().PaidAt.ToString("dd/MM/yyyy HH:mm") - 
+                            @Model.Order.TotalPaid.ToString("N0") VND
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div style="position: relative; margin-bottom: 2rem; opacity: 0.5;">
+                    <div style="position: absolute; left: -1.625rem; top: 0.25rem; width: 1rem; height: 1rem; background: var(--border); border-radius: 50%; border: 3px solid var(--surface);"></div>
+                    <div>
+                        <div style="font-weight: 600; margin-bottom: 0.25rem; color: var(--text-muted);">Chờ thanh toán</div>
+                        <div class="text-muted" style="font-size: 0.875rem;">Chưa có thanh toán</div>
+                    </div>
+                </div>
+            }
+
+            <!-- Step 3: Delivery Scheduled -->
+            @if (Model.Order.Delivery != null)
+            {
+                var isDelivered = Model.Order.Delivery.Status == "DELIVERED";
+                <div style="position: relative; margin-bottom: 2rem;">
+                    <div style="position: absolute; left: -1.625rem; top: 0.25rem; width: 1rem; height: 1rem; background: @(isDelivered ? "var(--success)" : "var(--info)"); border-radius: 50%; border: 3px solid var(--surface);"></div>
+                    <div>
+                        <div style="font-weight: 600; margin-bottom: 0.25rem;">
+                            @if (isDelivered)
+                            {
+                                <span style="color: var(--success);">Đã giao xe</span>
+                            }
+                            else
+                            {
+                                <span>Đã lên lịch giao xe</span>
+                            }
+                        </div>
+                        <div class="text-muted" style="font-size: 0.875rem;">
+                            @if (isDelivered && Model.Order.Delivery.DeliveredDate.HasValue)
+                            {
+                                <span>Giao ngày: @Model.Order.Delivery.DeliveredDate.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                            }
+                            else
+                            {
+                                <span>Dự kiến: @Model.Order.Delivery.ScheduledDate.ToString("dd/MM/yyyy HH:mm")</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div style="position: relative; margin-bottom: 2rem; opacity: 0.5;">
+                    <div style="position: absolute; left: -1.625rem; top: 0.25rem; width: 1rem; height: 1rem; background: var(--border); border-radius: 50%; border: 3px solid var(--surface);"></div>
+                    <div>
+                        <div style="font-weight: 600; margin-bottom: 0.25rem; color: var(--text-muted);">Chờ lên lịch giao xe</div>
+                        <div class="text-muted" style="font-size: 0.875rem;">Đại lý sẽ liên hệ để sắp xếp</div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-2 gap-4">
+    <!-- Left Column: Order Items & Info -->
+    <div>
+        <!-- Order Items -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title">Danh sách xe (@Model.Order.Items.Count xe)</h3>
+            </div>
+            <div class="card-body" style="padding: 0;">
+                @if (Model.Order.Items.Any())
+                {
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Xe</th>
+                                    <th>Màu</th>
+                                    <th>SL</th>
+                                    <th>Đơn giá</th>
+                                    <th>Giảm giá</th>
+                                    <th>Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Order.Items)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                                @if (!string.IsNullOrEmpty(item.VehicleImageUrl))
+                                                {
+                                                    <img src="@item.VehicleImageUrl" alt="@item.VehicleModel" 
+                                                         style="width: 60px; height: 60px; object-fit: cover; border-radius: var(--radius-sm);" />
+                                                }
+                                                <div>
+                                                    <div><strong>@item.VehicleModel</strong></div>
+                                                    <div class="text-muted" style="font-size: 0.875rem;">@item.VehicleVariant</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>@item.ColorCode</td>
+                                        <td>@item.Qty</td>
+                                        <td>@item.UnitPrice.ToString("N0")</td>
+                                        <td style="color: var(--success);">-@item.DiscountValue.ToString("N0")</td>
+                                        <td><strong>@item.LineTotal.ToString("N0")</strong></td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot>
+                                <tr style="border-top: 2px solid var(--border);">
+                                    <td colspan="5" style="text-align: right;"><strong>Tổng cộng:</strong></td>
+                                    <td><strong style="font-size: 1.125rem;">@Model.Order.SubTotal.ToString("N0") VND</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Dealer Information -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Thông tin đại lý</h3>
+            </div>
+            <div class="card-body">
+                <div class="grid grid-cols-1 gap-3">
+                    <div>
+                        <div class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.25rem;">Tên đại lý</div>
+                        <div><strong>@Model.Order.DealerName</strong></div>
+                    </div>
+                    <div>
+                        <div class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.25rem;">Địa chỉ</div>
+                        <div>@Model.Order.DealerAddress</div>
+                    </div>
+                    <div>
+                        <div class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.25rem;">Số điện thoại</div>
+                        <div>@Model.Order.DealerPhone</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Payments & Delivery -->
+    <div>
+        <!-- Payment History -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title">Lịch sử thanh toán</h3>
+            </div>
+            <div class="card-body">
+                @if (Model.Order.Payments.Any())
+                {
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Ngày</th>
+                                    <th>Phương thức</th>
+                                    <th>Số tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var payment in Model.Order.Payments)
+                                {
+                                    <tr>
+                                        <td>@payment.PaidAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>
+                                            @if (payment.Method == "CASH")
+                                            {
+                                                <span style="color: var(--info);"><i class="bi bi-cash"></i> Tiền mặt</span>
+                                            }
+                                            else
+                                            {
+                                                <span style="color: var(--accent-cyan);"><i class="bi bi-credit-card"></i> Trả góp</span>
+                                            }
+                                        </td>
+                                        <td><strong>@payment.Amount.ToString("N0") VND</strong></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span class="text-muted">Tổng đã thanh toán:</span>
+                            <strong style="font-size: 1.125rem; color: var(--success);">@Model.Order.TotalPaid.ToString("N0") VND</strong>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state" style="padding: 2rem 1rem;">
+                        <div class="empty-state-icon">💰</div>
+                        <div class="empty-state-title">Chưa có thanh toán</div>
+                        <div class="empty-state-text">Vui lòng thanh toán theo hướng dẫn của đại lý</div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Delivery Information -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Thông tin giao xe</h3>
+            </div>
+            <div class="card-body">
+                @if (Model.Order.Delivery != null)
+                {
+                    <div class="grid grid-cols-1 gap-3">
+                        <div>
+                            <div class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.25rem;">Trạng thái</div>
+                            <div>@await Html.PartialAsync("_StatusBadge", Model.Order.Delivery.Status)</div>
+                        </div>
+                        <div>
+                            <div class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.25rem;">Ngày hẹn giao</div>
+                            <div><strong>@Model.Order.Delivery.ScheduledDate.ToString("dd/MM/yyyy HH:mm")</strong></div>
+                        </div>
+                        @if (Model.Order.Delivery.DeliveredDate.HasValue)
+                        {
+                            <div>
+                                <div class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.25rem;">Ngày giao thực tế</div>
+                                <div style="color: var(--success);">
+                                    <strong>@Model.Order.Delivery.DeliveredDate.Value.ToString("dd/MM/yyyy HH:mm")</strong>
+                                </div>
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.Order.Delivery.HandoverNote))
+                        {
+                            <div>
+                                <div class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.25rem;">Ghi chú</div>
+                                <div style="padding: 0.75rem; background: var(--black); border-radius: var(--radius-sm);">
+                                    @Model.Order.Delivery.HandoverNote
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state" style="padding: 2rem 1rem;">
+                        <div class="empty-state-icon">🚚</div>
+                        <div class="empty-state-title">Chưa lên lịch giao xe</div>
+                        <div class="empty-state-text">Đại lý sẽ liên hệ để sắp xếp lịch giao xe</div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+

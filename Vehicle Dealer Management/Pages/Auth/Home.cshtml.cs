@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.DAL.Data;
 
-namespace Vehicle_Dealer_Management.Pages
+namespace Vehicle_Dealer_Management.Pages.Auth
 {
     public class HomeModel : PageModel
     {

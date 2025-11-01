@@ -5,7 +5,7 @@ using Vehicle_Dealer_Management.DAL.Data;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Vehicle_Dealer_Management.Pages
+namespace Vehicle_Dealer_Management.Pages.Auth
 {
     public class LoginModel : PageModel
     {

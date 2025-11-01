@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace Vehicle_Dealer_Management.Pages
+namespace Vehicle_Dealer_Management.Pages.Auth
 {
     public class LogoutModel : PageModel
     {

@@ -1,5 +1,5 @@
-@page
-@model Vehicle_Dealer_Management.Pages.ProfileModel
+@page "/Profile"
+@model Vehicle_Dealer_Management.Pages.Auth.ProfileModel
 @{
     ViewData["Title"] = "Thông tin tài khoản";
     ViewData["UserRole"] = Model.UserRole;
@@ -36,7 +36,7 @@
 
                 <div class="form-group">
                     <label class="form-label">Vai trò</label>
-                    <input type="text" class="form-control" value="@Model.User.Role.Name" readonly style="background: var(--black); cursor: not-allowed;" />
+                    <input type="text" class="form-control" value="@Model.User.Role?.Name" readonly style="background: var(--black); cursor: not-allowed;" />
                 </div>
 
                 @if (Model.User.Dealer != null)

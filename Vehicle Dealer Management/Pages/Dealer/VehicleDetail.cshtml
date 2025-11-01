@@ -1,0 +1,188 @@
+@page "/Dealer/VehicleDetail"
+@model Vehicle_Dealer_Management.Pages.Dealer.VehicleDetailModel
+@{
+    ViewData["Title"] = "@Model.Vehicle.ModelName - @Model.Vehicle.VariantName";
+    // UserRole and UserName are set in code-behind from Session
+}
+
+@await Html.PartialAsync("_PageHeader")
+
+<div class="content-header">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="content-title">@Model.Vehicle.ModelName @Model.Vehicle.VariantName</h1>
+            <p class="content-subtitle">Chi tiết thông tin xe</p>
+        </div>
+        <div style="display: flex; gap: 0.75rem;">
+            <a href="/Dealer/Vehicles" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Quay lại
+            </a>
+            <a href="/Dealer/Sales/CreateQuote?vehicleId=@Model.Vehicle.Id" class="btn btn-primary">
+                <i class="bi bi-file-text"></i> Tạo báo giá
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-2 gap-4">
+    <!-- Left Column: Image & Specs -->
+    <div>
+        <!-- Vehicle Image -->
+        <div class="card mb-4">
+            <div class="card-body" style="padding: 0;">
+                <img src="@Model.Vehicle.ImageUrl" alt="@Model.Vehicle.ModelName" 
+                     style="width: 100%; height: auto; border-radius: var(--radius) var(--radius) 0 0; object-fit: cover;" />
+                <div style="padding: 1.5rem;">
+                    <div class="flex justify-between items-center mb-3">
+                        <div>
+                            <h3 style="margin-bottom: 0.25rem;">@Model.Vehicle.ModelName</h3>
+                            <p class="text-muted">@Model.Vehicle.VariantName</p>
+                        </div>
+                        @await Html.PartialAsync("_StatusBadge", Model.Vehicle.Status)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Specifications -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Thông số kỹ thuật</h3>
+            </div>
+            <div class="card-body">
+                @if (Model.Vehicle.Specs.Any())
+                {
+                    <div class="table-container">
+                        <table class="table">
+                            <tbody>
+                                @foreach (var spec in Model.Vehicle.Specs)
+                                {
+                                    <tr>
+                                        <td style="width: 40%;"><strong>@spec.Key</strong></td>
+                                        <td>@spec.Value</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted">Chưa có thông tin thông số kỹ thuật</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Pricing & Stock -->
+    <div>
+        <!-- Pricing -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title">Bảng giá</h3>
+            </div>
+            <div class="card-body">
+                <div class="grid grid-cols-1 gap-3">
+                    <div style="padding: 1.5rem; background: var(--black); border-radius: var(--radius-sm);">
+                        <div class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.5rem;">Giá bán lẻ (MSRP)</div>
+                        <div style="font-size: 1.75rem; font-weight: 700; color: var(--accent-cyan);">
+                            @Model.Vehicle.Msrp.ToString("N0") VND
+                        </div>
+                    </div>
+                    <div style="padding: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                        <div class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.5rem;">Giá sỉ</div>
+                        <div style="font-size: 1.5rem; font-weight: 600;">
+                            @Model.Vehicle.WholesalePrice.ToString("N0") VND
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stock Availability (EVM) -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title">Tồn kho EVM (có thể đặt hàng)</h3>
+            </div>
+            <div class="card-body">
+                @if (Model.Vehicle.AvailableColors.Any())
+                {
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Màu sắc</th>
+                                    <th>Số lượng</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var stock in Model.Vehicle.AvailableColors)
+                                {
+                                    <tr>
+                                        <td><strong>@stock.ColorCode</strong></td>
+                                        <td>@stock.Qty xe</td>
+                                        <td>
+                                            @if (stock.Qty > 10)
+                                            {
+                                                <span style="color: var(--success);"><i class="bi bi-check-circle"></i> Còn nhiều</span>
+                                            }
+                                            else if (stock.Qty > 5)
+                                            {
+                                                <span style="color: var(--warning);"><i class="bi bi-exclamation-circle"></i> Còn ít</span>
+                                            }
+                                            else
+                                            {
+                                                <span style="color: var(--error);"><i class="bi bi-exclamation-triangle"></i> Sắp hết</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state" style="padding: 2rem 1rem;">
+                        <div class="empty-state-icon">📦</div>
+                        <div class="empty-state-title">Không có tồn kho</div>
+                        <div class="empty-state-text">Liên hệ EVM để đặt hàng</div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Dealer Stock (if any) -->
+        @if (Model.Vehicle.DealerStocks.Any())
+        {
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Tồn kho tại đại lý</h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Màu sắc</th>
+                                    <th>Số lượng</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var stock in Model.Vehicle.DealerStocks)
+                                {
+                                    <tr>
+                                        <td><strong>@stock.ColorCode</strong></td>
+                                        <td>@stock.Qty xe</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+

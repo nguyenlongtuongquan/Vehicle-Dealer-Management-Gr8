@@ -10,11 +10,16 @@ namespace Vehicle_Dealer_Management.Pages.EVM
     {
         private readonly ApplicationDbContext _context;
         private readonly IDealerService _dealerService;
+        private readonly ISalesDocumentService _salesDocumentService;
 
-        public DealersModel(ApplicationDbContext context, IDealerService dealerService)
+        public DealersModel(
+            ApplicationDbContext context, 
+            IDealerService dealerService,
+            ISalesDocumentService salesDocumentService)
         {
             _context = context;
             _dealerService = dealerService;
+            _salesDocumentService = salesDocumentService;
         }
 
         public int TotalDealers { get; set; }
@@ -39,11 +44,24 @@ namespace Vehicle_Dealer_Management.Pages.EVM
             ActiveDealers = dealers.Count(d => d.Status == "ACTIVE");
             InactiveDealers = dealers.Count(d => d.Status != "ACTIVE");
 
-            // Get sales for each dealer (mock for now)
+            // Get sales for each dealer from actual data
             foreach (var dealer in dealers)
             {
-                var monthlySales = 350000000m; // Mock
-                var totalOrders = 15; // Mock
+                // Get orders for this dealer
+                var orders = (await _salesDocumentService.GetSalesDocumentsByDealerIdAsync(dealer.Id, "ORDER", null)).ToList();
+                
+                // Calculate monthly sales (current month)
+                var currentMonthStart = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+                var monthlyOrders = orders
+                    .Where(o => o.CreatedAt >= currentMonthStart && 
+                                o.CreatedAt < currentMonthStart.AddMonths(1))
+                    .ToList();
+                
+                var monthlySales = monthlyOrders
+                    .Sum(o => o.Lines?.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue) ?? 0);
+                
+                // Total orders count
+                var totalOrders = orders.Count;
 
                 Dealers.Add(new DealerViewModel
                 {

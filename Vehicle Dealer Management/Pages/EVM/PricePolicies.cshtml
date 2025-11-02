@@ -84,8 +84,40 @@
                                     <span>@policy.DealerName</span>
                                 }
                             </td>
-                            <td><strong style="color: var(--accent-cyan);">@policy.Msrp.ToString("N0") VND</strong></td>
-                            <td>@policy.WholesalePrice.ToString("N0") VND</td>
+                            <td>
+                                @if (policy.OriginalMsrp.HasValue && policy.OriginalMsrp.Value != policy.Msrp)
+                                {
+                                    <div>
+                                        <div style="text-decoration: line-through; color: var(--text-muted); font-size: 0.875rem;">
+                                            @policy.OriginalMsrp.Value.ToString("N0") VND
+                                        </div>
+                                        <div>
+                                            <strong style="color: var(--accent-cyan);">@policy.Msrp.ToString("N0") VND</strong>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <strong style="color: var(--accent-cyan);">@policy.Msrp.ToString("N0") VND</strong>
+                                }
+                            </td>
+                            <td>
+                                @if (policy.OriginalWholesalePrice.HasValue && policy.OriginalWholesalePrice.Value != policy.WholesalePrice)
+                                {
+                                    <div>
+                                        <div style="text-decoration: line-through; color: var(--text-muted); font-size: 0.875rem;">
+                                            @policy.OriginalWholesalePrice.Value.ToString("N0") VND
+                                        </div>
+                                        <div>
+                                            <strong>@policy.WholesalePrice.ToString("N0") VND</strong>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span>@policy.WholesalePrice.ToString("N0") VND</span>
+                                }
+                            </td>
                             <td>@policy.ValidFrom.ToString("dd/MM/yyyy")</td>
                             <td>@(policy.ValidTo?.ToString("dd/MM/yyyy") ?? "Không giới hạn")</td>
                             <td>
@@ -109,6 +141,8 @@
                                             data-vehicle-name="@(policy.VehicleName.Replace("\"", "&quot;"))"
                                             data-msrp="@policy.Msrp"
                                             data-wholesale-price="@policy.WholesalePrice"
+                                            data-original-msrp="@(policy.OriginalMsrp?.ToString() ?? policy.Msrp.ToString())"
+                                            data-original-wholesale-price="@(policy.OriginalWholesalePrice?.ToString() ?? policy.WholesalePrice.ToString())"
                                             data-valid-from="@policy.ValidFrom.ToString("yyyy-MM-dd")"
                                             data-valid-to="@(policy.ValidTo?.ToString("yyyy-MM-dd") ?? "")"
                                             data-note="@((policy.Note ?? "").Replace("\"", "&quot;").Replace("\r", "").Replace("\n", " "))">
@@ -378,8 +412,10 @@
             try {
                 var id = button.getAttribute('data-policy-id');
                 var vehicleName = button.getAttribute('data-vehicle-name') || '';
-                var msrp = button.getAttribute('data-msrp') || '0';
-                var wholesalePrice = button.getAttribute('data-wholesale-price') || '0';
+                var msrp = button.getAttribute('data-msrp') || '0'; // Giá cuối (sau discount)
+                var wholesalePrice = button.getAttribute('data-wholesale-price') || '0'; // Giá cuối (sau discount)
+                var originalMsrp = button.getAttribute('data-original-msrp') || msrp; // Giá gốc
+                var originalWholesalePrice = button.getAttribute('data-original-wholesale-price') || wholesalePrice; // Giá sỉ gốc
                 var validFrom = button.getAttribute('data-valid-from') || '';
                 var validTo = button.getAttribute('data-valid-to') || '';
                 var note = button.getAttribute('data-note') || '';
@@ -407,13 +443,32 @@
 
                 editPolicyId.value = id;
                 editVehicleName.value = vehicleName;
-                editMsrp.value = msrp;
-                editWholesalePrice.value = wholesalePrice;
-                if (editDiscountPercent) editDiscountPercent.value = '';
+                
+                // Điền giá gốc vào input (không phải giá cuối)
+                editMsrp.value = originalMsrp;
+                editWholesalePrice.value = originalWholesalePrice;
+                
+                // Tính discount phần trăm nếu có
+                var originalMsrpNum = parseFloat(originalMsrp);
+                var msrpNum = parseFloat(msrp);
+                if (originalMsrpNum > 0 && originalMsrpNum !== msrpNum) {
+                    var discountPercent = ((originalMsrpNum - msrpNum) / originalMsrpNum) * 100;
+                    if (editDiscountPercent) editDiscountPercent.value = discountPercent.toFixed(1);
+                } else {
+                    if (editDiscountPercent) editDiscountPercent.value = '';
+                }
+                
                 if (editNote) editNote.value = note;
                 if (editValidFrom) editValidFrom.value = validFrom;
                 if (editValidTo) editValidTo.value = validTo;
-                if (editPricePreview) editPricePreview.style.display = 'none';
+                
+                // Cập nhật preview nếu có discount
+                if (editPricePreview && editDiscountPercent && editDiscountPercent.value) {
+                    calculateEditPrice();
+                } else {
+                    if (editPricePreview) editPricePreview.style.display = 'none';
+                }
+                
                 editModal.style.display = 'flex';
             } catch (error) {
                 console.error('Error opening edit modal:', error);

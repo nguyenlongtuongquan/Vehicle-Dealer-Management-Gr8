@@ -12,7 +12,7 @@ using Vehicle_Dealer_Management.DAL.Data;
 namespace Vehicle_Dealer_Management.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251102192159_InitialCreate")]
+    [Migration("20251102213012_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -475,6 +475,12 @@ namespace Vehicle_Dealer_Management.Migrations
 
                     b.Property<string>("Note")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("OriginalMsrp")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("OriginalWholesalePrice")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int?>("PromotionId")
                         .HasColumnType("int");

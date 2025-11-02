@@ -61,6 +61,24 @@ namespace Vehicle_Dealer_Management.BLL.Services
             return await _testDriveRepository.AddAsync(testDrive);
         }
 
+        public async Task UpdateTestDriveAsync(TestDrive testDrive)
+        {
+            if (testDrive == null)
+            {
+                throw new ArgumentNullException(nameof(testDrive));
+            }
+
+            // Business logic: Validate test drive
+            if (testDrive.ScheduleTime < DateTime.UtcNow)
+            {
+                throw new ArgumentException("Schedule time must be in the future", nameof(testDrive));
+            }
+
+            testDrive.UpdatedAt = DateTime.UtcNow;
+
+            await _testDriveRepository.UpdateAsync(testDrive);
+        }
+
         public async Task UpdateTestDriveStatusAsync(int id, string status)
         {
             var testDrive = await _testDriveRepository.GetByIdAsync(id);

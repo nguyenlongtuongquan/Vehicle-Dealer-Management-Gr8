@@ -41,11 +41,20 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
             var dealerId = HttpContext.Session.GetString("DealerId");
             if (string.IsNullOrEmpty(dealerId))
             {
+                TempData["Error"] = "Không tìm thấy thông tin đại lý. Vui lòng đăng nhập lại.";
                 return RedirectToPage("/Auth/Login");
             }
 
             Filter = filter ?? "all";
             var dealerIdInt = int.Parse(dealerId);
+            
+            // Debug: Verify dealer exists
+            var dealer = await _context.Dealers.FindAsync(dealerIdInt);
+            if (dealer == null)
+            {
+                TempData["Error"] = $"Đại lý với ID {dealerIdInt} không tồn tại.";
+                return RedirectToPage("/Auth/Login");
+            }
 
             // Get customers for create form
             var customers = await _customerService.GetAllCustomersAsync();
@@ -85,6 +94,28 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
             }
 
             var testDrivesList = testDrives.ToList();
+            
+            // Debug: Check all test drives to see if there's a mismatch
+            var allTestDrivesInDb = await _context.TestDrives.ToListAsync();
+            var testDrivesWithDifferentDealer = allTestDrivesInDb
+                .Where(t => t.DealerId != dealerIdInt)
+                .ToList();
+            
+            // Debug: If there are test drives but none match, show debug info
+            if (allTestDrivesInDb.Any() && !testDrivesList.Any())
+            {
+                // There are test drives in DB but none match this dealerId
+                var actualDealerIds = allTestDrivesInDb.Select(t => t.DealerId).Distinct().ToList();
+                var dealersInTestDrives = await _context.Dealers
+                    .Where(d => actualDealerIds.Contains(d.Id))
+                    .Select(d => $"{d.Name} (ID: {d.Id})")
+                    .ToListAsync();
+                
+                TempData["DebugInfo"] = $"Lưu ý: Tìm thấy {allTestDrivesInDb.Count} test drive trong hệ thống, nhưng không có lịch nào thuộc về đại lý của bạn. " +
+                    $"Bạn đang làm việc tại: <strong>{dealer?.Name ?? "N/A"}</strong> (ID: {dealerIdInt}). " +
+                    $"Các test drive hiện có thuộc về: {string.Join(", ", dealersInTestDrives)}. " +
+                    $"Vui lòng đăng nhập với tài khoản của đại lý tương ứng để xem lịch.";
+            }
 
             // Calculate counts
             var todayTestDrives = await _testDriveService.GetTestDrivesByDealerAndDateAsync(dealerIdInt, DateTime.Today);

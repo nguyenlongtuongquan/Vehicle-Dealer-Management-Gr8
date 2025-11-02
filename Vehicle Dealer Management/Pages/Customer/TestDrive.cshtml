@@ -88,9 +88,22 @@
                     
                     @if (!isPast && td.Status != "DONE" && td.Status != "CANCELLED")
                     {
-                        <button class="btn btn-danger btn-sm">
-                            <i class="bi bi-x-circle"></i> Hủy lịch
+                        <button class="btn btn-primary btn-sm" 
+                                data-testdrive-id="@td.Id"
+                                data-dealer-id="@td.DealerId"
+                                data-vehicle-id="@td.VehicleId"
+                                data-date="@td.ScheduleTime.ToString("yyyy-MM-dd")"
+                                data-time="@td.ScheduleTime.ToString("HH:mm")"
+                                data-note="@(Html.Raw(td.Note?.Replace("\"", "&quot;") ?? ""))"
+                                onclick="openEditModal(this)">
+                            <i class="bi bi-pencil"></i> Sửa
                         </button>
+                        <form method="post" asp-page-handler="Cancel" style="display: inline;" onsubmit="return confirm('Bạn có chắc chắn muốn hủy lịch lái thử này?');">
+                            <input type="hidden" name="testDriveId" value="@td.Id" />
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                <i class="bi bi-x-circle"></i> Hủy lịch
+                            </button>
+                        </form>
                     }
                 </div>
             </div>
@@ -118,6 +131,7 @@ else
         </div>
         <div class="card-body">
             <form method="post">
+                @Html.AntiForgeryToken()
                 <div class="form-group">
                     <label class="form-label">Đại lý</label>
                     <select class="form-control" name="dealerId" required>
@@ -175,4 +189,114 @@ else
         </div>
     </div>
 </div>
+
+<!-- Edit Modal -->
+<div id="editModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center;">
+    <div class="card" style="max-width: 500px; width: 90%;">
+        <div class="card-header">
+            <h3 class="card-title mb-0">Sửa lịch lái thử</h3>
+        </div>
+        <div class="card-body">
+            <form method="post" asp-page-handler="Edit">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="testDriveId" id="editTestDriveId" />
+                <div class="form-group">
+                    <label class="form-label">Đại lý</label>
+                    <select class="form-control" name="dealerId" id="editDealerId" required>
+                        <option value="">-- Chọn đại lý --</option>
+                        @foreach (var d in Model.AllDealers)
+                        {
+                            <option value="@d.Id">@d.Name - @d.Address</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Mẫu xe</label>
+                    <select class="form-control" name="vehicleId" id="editVehicleId" required>
+                        <option value="">-- Chọn xe --</option>
+                        @foreach (var v in Model.AllVehicles)
+                        {
+                            <option value="@v.Id">@v.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ngày lái thử</label>
+                    <input type="date" class="form-control" name="date" id="editDate" required min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Giờ</label>
+                    <select class="form-control" name="time" id="editTime" required>
+                        <option value="09:00">09:00</option>
+                        <option value="10:00">10:00</option>
+                        <option value="11:00">11:00</option>
+                        <option value="14:00">14:00</option>
+                        <option value="15:00">15:00</option>
+                        <option value="16:00">16:00</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ghi chú (tùy chọn)</label>
+                    <textarea class="form-control" name="note" id="editNote" rows="2" placeholder="Yêu cầu đặc biệt..."></textarea>
+                </div>
+                @if (TempData["EditError"] != null)
+                {
+                    <div class="alert alert-error" style="margin-bottom: 1rem; padding: 0.75rem; background: var(--error-bg); border: 1px solid var(--error); border-radius: var(--radius-sm); color: var(--error);">
+                        <i class="bi bi-exclamation-triangle"></i> @TempData["EditError"]
+                    </div>
+                }
+                <div class="flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check"></i> Cập nhật
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('editModal').style.display='none'">
+                        Hủy
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openEditModal(button) {
+        var testDriveId = button.getAttribute('data-testdrive-id');
+        var dealerId = button.getAttribute('data-dealer-id');
+        var vehicleId = button.getAttribute('data-vehicle-id');
+        var date = button.getAttribute('data-date');
+        var time = button.getAttribute('data-time');
+        var note = button.getAttribute('data-note') || '';
+
+        document.getElementById('editTestDriveId').value = testDriveId;
+        document.getElementById('editDealerId').value = dealerId;
+        document.getElementById('editVehicleId').value = vehicleId;
+        document.getElementById('editDate').value = date;
+        document.getElementById('editTime').value = time;
+        document.getElementById('editNote').value = note;
+
+        document.getElementById('editModal').style.display = 'flex';
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        var bookModal = document.getElementById('bookModal');
+        var editModal = document.getElementById('editModal');
+        if (event.target == bookModal) {
+            bookModal.style.display = 'none';
+        }
+        if (event.target == editModal) {
+            editModal.style.display = 'none';
+        }
+    }
+
+    // Auto-open modal if there's an error
+    @if (TempData["KeepModalOpen"] != null)
+    {
+        <text>
+        window.onload = function() {
+            document.getElementById('bookModal').style.display = 'flex';
+        };
+        </text>
+    }
+</script>
 

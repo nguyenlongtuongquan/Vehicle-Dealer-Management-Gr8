@@ -15,10 +15,16 @@ namespace Vehicle_Dealer_Management.DAL.Models
 
         [Required]
         [Column(TypeName = "decimal(18,2)")]
-        public decimal Msrp { get; set; } // Manufacturer's Suggested Retail Price
+        public decimal Msrp { get; set; } // Manufacturer's Suggested Retail Price (giá cuối sau khi áp dụng discount)
 
         [Column(TypeName = "decimal(18,2)")]
-        public decimal? WholesalePrice { get; set; } // Giá sỉ cho đại lý
+        public decimal? WholesalePrice { get; set; } // Giá sỉ cho đại lý (giá cuối sau khi áp dụng discount)
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? OriginalMsrp { get; set; } // Giá gốc ban đầu trước khi giảm giá
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? OriginalWholesalePrice { get; set; } // Giá sỉ gốc ban đầu trước khi giảm giá
 
         [Column(TypeName = "nvarchar(max)")]
         public string? DiscountRuleJson { get; set; } // JSON chứa quy tắc giảm giá

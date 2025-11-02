@@ -27,6 +27,7 @@ namespace Vehicle_Dealer_Management.DAL.Repositories
                 .Where(t => t.DealerId == dealerId)
                 .Include(t => t.Customer)
                 .Include(t => t.Vehicle)
+                .Include(t => t.Dealer)
                 .OrderBy(t => t.ScheduleTime)
                 .ToListAsync();
         }
@@ -37,6 +38,7 @@ namespace Vehicle_Dealer_Management.DAL.Repositories
                 .Where(t => t.DealerId == dealerId && t.ScheduleTime.Date == date.Date)
                 .Include(t => t.Customer)
                 .Include(t => t.Vehicle)
+                .Include(t => t.Dealer)
                 .OrderBy(t => t.ScheduleTime)
                 .ToListAsync();
         }
@@ -53,6 +55,7 @@ namespace Vehicle_Dealer_Management.DAL.Repositories
             return await query
                 .Include(t => t.Customer)
                 .Include(t => t.Vehicle)
+                .Include(t => t.Dealer)
                 .OrderBy(t => t.ScheduleTime)
                 .ToListAsync();
         }

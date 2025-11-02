@@ -59,7 +59,22 @@ namespace Vehicle_Dealer_Management.Pages.Customer
             {
                 try
                 {
-                    specs = JsonSerializer.Deserialize<Dictionary<string, string>>(vehicle.SpecJson) ?? new Dictionary<string, string>();
+                    var parsedSpecs = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(vehicle.SpecJson);
+                    if (parsedSpecs != null)
+                    {
+                        foreach (var kvp in parsedSpecs)
+                        {
+                            // Convert JsonElement to string representation
+                            specs[kvp.Key] = kvp.Value.ValueKind switch
+                            {
+                                JsonValueKind.String => kvp.Value.GetString() ?? "",
+                                JsonValueKind.Number => kvp.Value.GetRawText(),
+                                JsonValueKind.True => "Có",
+                                JsonValueKind.False => "Không",
+                                _ => kvp.Value.GetRawText()
+                            };
+                        }
+                    }
                 }
                 catch
                 {
@@ -76,6 +91,7 @@ namespace Vehicle_Dealer_Management.Pages.Customer
                 Status = vehicle.Status,
                 Specs = specs,
                 Price = pricePolicy?.Msrp ?? 0,
+                OriginalPrice = pricePolicy?.OriginalMsrp, // Giá gốc trước khi giảm
                 PriceNote = pricePolicy?.Note,
                 Dealers = dealers
             };
@@ -91,7 +107,8 @@ namespace Vehicle_Dealer_Management.Pages.Customer
             public string ImageUrl { get; set; } = "";
             public string Status { get; set; } = "";
             public Dictionary<string, string> Specs { get; set; } = new();
-            public decimal Price { get; set; }
+            public decimal Price { get; set; } // Giá cuối (sau discount)
+            public decimal? OriginalPrice { get; set; } // Giá gốc (trước khi giảm)
             public string? PriceNote { get; set; }
             public List<DealerSimpleViewModel> Dealers { get; set; } = new();
         }

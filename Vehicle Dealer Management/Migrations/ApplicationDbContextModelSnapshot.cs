@@ -473,6 +473,12 @@ namespace Vehicle_Dealer_Management.Migrations
                     b.Property<string>("Note")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<decimal?>("OriginalMsrp")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("OriginalWholesalePrice")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<int?>("PromotionId")
                         .HasColumnType("int");
 

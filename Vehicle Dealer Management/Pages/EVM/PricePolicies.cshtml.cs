@@ -81,8 +81,10 @@ namespace Vehicle_Dealer_Management.Pages.EVM
                 Id = p.Id,
                 VehicleName = $"{p.Vehicle?.ModelName} {p.Vehicle?.VariantName}",
                 DealerName = p.Dealer?.Name ?? "",
-                Msrp = p.Msrp,
-                WholesalePrice = p.WholesalePrice ?? 0,
+                Msrp = p.Msrp, // Giá cuối (sau discount)
+                WholesalePrice = p.WholesalePrice ?? 0, // Giá cuối (sau discount)
+                OriginalMsrp = p.OriginalMsrp, // Giá gốc
+                OriginalWholesalePrice = p.OriginalWholesalePrice, // Giá sỉ gốc
                 ValidFrom = p.ValidFrom,
                 ValidTo = p.ValidTo,
                 Note = p.Note ?? ""
@@ -131,12 +133,15 @@ namespace Vehicle_Dealer_Management.Pages.EVM
                     }
                 }
 
+                // Lưu giá gốc và giá sau discount
                 var pricePolicy = new PricePolicy
                 {
                     VehicleId = vehicleId,
                     DealerId = null, // Global
-                    Msrp = finalMsrp ?? msrp,
-                    WholesalePrice = finalWholesalePrice ?? wholesalePrice,
+                    Msrp = finalMsrp ?? msrp, // Giá cuối (sau discount)
+                    WholesalePrice = finalWholesalePrice ?? wholesalePrice, // Giá cuối (sau discount)
+                    OriginalMsrp = msrp, // Giá gốc ban đầu
+                    OriginalWholesalePrice = wholesalePrice, // Giá sỉ gốc ban đầu
                     PromotionId = promotionId, // Có thể null nếu dùng discountPercent trực tiếp
                     Note = string.IsNullOrWhiteSpace(note) ? null : note.Trim(),
                     ValidFrom = DateTime.UtcNow,
@@ -185,6 +190,17 @@ namespace Vehicle_Dealer_Management.Pages.EVM
                     return RedirectToPage();
                 }
 
+                // Nếu có giá gốc, dùng giá gốc làm giá nhập vào
+                // Nếu không có giá gốc, dùng giá cuối làm giá gốc (backward compatibility)
+                if (policy.OriginalMsrp.HasValue)
+                {
+                    msrp = policy.OriginalMsrp.Value;
+                }
+                if (policy.OriginalWholesalePrice.HasValue)
+                {
+                    wholesalePrice = policy.OriginalWholesalePrice.Value;
+                }
+
                 // Parse dates
                 if (!DateTime.TryParse(validFrom, out var validFromDate))
                 {
@@ -203,11 +219,29 @@ namespace Vehicle_Dealer_Management.Pages.EVM
                 decimal? finalWholesalePrice = wholesalePrice;
                 decimal finalDiscountPercent = 0;
 
+                // Lưu giá gốc: Nếu chưa có OriginalMsrp, lấy giá nhập vào làm giá gốc
+                // Nếu đã có OriginalMsrp và có discount, giữ nguyên giá gốc
                 if (discountPercent.HasValue && discountPercent.Value > 0)
                 {
                     finalDiscountPercent = discountPercent.Value;
                     finalMsrp = msrp * (1 - discountPercent.Value / 100);
                     finalWholesalePrice = wholesalePrice * (1 - discountPercent.Value / 100);
+                    
+                    // Nếu chưa có giá gốc, lấy giá nhập vào làm giá gốc
+                    if (!policy.OriginalMsrp.HasValue)
+                    {
+                        policy.OriginalMsrp = msrp;
+                    }
+                    if (!policy.OriginalWholesalePrice.HasValue)
+                    {
+                        policy.OriginalWholesalePrice = wholesalePrice;
+                    }
+                }
+                else
+                {
+                    // Không có discount: giá gốc = giá cuối = giá nhập vào
+                    policy.OriginalMsrp = msrp;
+                    policy.OriginalWholesalePrice = wholesalePrice;
                 }
 
                 // Update policy
@@ -281,8 +315,10 @@ namespace Vehicle_Dealer_Management.Pages.EVM
             public int Id { get; set; }
             public string VehicleName { get; set; } = "";
             public string DealerName { get; set; } = "";
-            public decimal Msrp { get; set; }
-            public decimal WholesalePrice { get; set; }
+            public decimal Msrp { get; set; } // Giá cuối (sau discount)
+            public decimal WholesalePrice { get; set; } // Giá cuối (sau discount)
+            public decimal? OriginalMsrp { get; set; } // Giá gốc ban đầu
+            public decimal? OriginalWholesalePrice { get; set; } // Giá sỉ gốc ban đầu
             public DateTime ValidFrom { get; set; }
             public DateTime? ValidTo { get; set; }
             public string Note { get; set; } = "";

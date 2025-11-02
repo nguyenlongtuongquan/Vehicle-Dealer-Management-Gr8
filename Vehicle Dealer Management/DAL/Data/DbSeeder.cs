@@ -208,8 +208,10 @@ namespace Vehicle_Dealer_Management.DAL.Data
                     {
                         VehicleId = vehicles[0].Id,
                         DealerId = null,
-                        Msrp = 2500000000, // 2.5 tỷ
-                        WholesalePrice = 2300000000, // 2.3 tỷ
+                        Msrp = 2500000000, // 2.5 tỷ (giá cuối, không có discount nên = giá gốc)
+                        WholesalePrice = 2300000000, // 2.3 tỷ (giá cuối, không có discount nên = giá gốc)
+                        OriginalMsrp = 2500000000, // 2.5 tỷ (giá gốc)
+                        OriginalWholesalePrice = 2300000000, // 2.3 tỷ (giá sỉ gốc)
                         Note = "Giá niêm yết chính thức từ nhà sản xuất. Giá có thể thay đổi tùy theo khuyến mãi và đại lý. Vui lòng liên hệ đại lý để biết giá chính xác nhất.",
                         ValidFrom = DateTime.UtcNow.AddMonths(-1),
                         ValidTo = null,
@@ -220,8 +222,10 @@ namespace Vehicle_Dealer_Management.DAL.Data
                     {
                         VehicleId = vehicles[1].Id,
                         DealerId = null,
-                        Msrp = 1500000000, // 1.5 tỷ
-                        WholesalePrice = 1400000000, // 1.4 tỷ
+                        Msrp = 1500000000, // 1.5 tỷ (giá cuối, không có discount nên = giá gốc)
+                        WholesalePrice = 1400000000, // 1.4 tỷ (giá cuối, không có discount nên = giá gốc)
+                        OriginalMsrp = 1500000000, // 1.5 tỷ (giá gốc)
+                        OriginalWholesalePrice = 1400000000, // 1.4 tỷ (giá sỉ gốc)
                         Note = "Giá đã bao gồm VAT. Hiện đang có chương trình khuyến mãi hấp dẫn cho khách hàng đặt mua trong tháng này. Giá có thể thay đổi tùy theo đại lý.",
                         ValidFrom = DateTime.UtcNow.AddMonths(-1),
                         ValidTo = null,
@@ -232,8 +236,10 @@ namespace Vehicle_Dealer_Management.DAL.Data
                     {
                         VehicleId = vehicles[2].Id,
                         DealerId = null,
-                        Msrp = 3500000000, // 3.5 tỷ
-                        WholesalePrice = 3300000000, // 3.3 tỷ
+                        Msrp = 3500000000, // 3.5 tỷ (giá cuối, không có discount nên = giá gốc)
+                        WholesalePrice = 3300000000, // 3.3 tỷ (giá cuối, không có discount nên = giá gốc)
+                        OriginalMsrp = 3500000000, // 3.5 tỷ (giá gốc)
+                        OriginalWholesalePrice = 3300000000, // 3.3 tỷ (giá sỉ gốc)
                         Note = "Giá niêm yết cho phiên bản Performance cao cấp. Bao gồm đầy đủ phụ kiện tiêu chuẩn. Hỗ trợ trả góp lãi suất ưu đãi từ các ngân hàng đối tác.",
                         ValidFrom = DateTime.UtcNow.AddMonths(-1),
                         ValidTo = null,
@@ -243,6 +249,32 @@ namespace Vehicle_Dealer_Management.DAL.Data
 
                 context.PricePolicies.AddRange(pricePolicies);
                 context.SaveChanges();
+            }
+            else
+            {
+                // Update existing PricePolicies to have OriginalMsrp and OriginalWholesalePrice
+                // Nếu chưa có giá gốc, set giá cuối làm giá gốc (backward compatibility)
+                var policiesWithoutOriginal = context.PricePolicies
+                    .Where(p => !p.OriginalMsrp.HasValue)
+                    .ToList();
+
+                foreach (var policy in policiesWithoutOriginal)
+                {
+                    policy.OriginalMsrp = policy.Msrp;
+                    if (policy.WholesalePrice.HasValue)
+                    {
+                        policy.OriginalWholesalePrice = policy.WholesalePrice.Value;
+                    }
+                    else
+                    {
+                        policy.OriginalWholesalePrice = null;
+                    }
+                }
+
+                if (policiesWithoutOriginal.Any())
+                {
+                    context.SaveChanges();
+                }
             }
 
             // Seed Stocks (EVM stock)

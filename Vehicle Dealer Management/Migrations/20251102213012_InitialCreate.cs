@@ -336,6 +336,8 @@ namespace Vehicle_Dealer_Management.Migrations
                     DealerId = table.Column<int>(type: "int", nullable: true),
                     Msrp = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     WholesalePrice = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    OriginalMsrp = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    OriginalWholesalePrice = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     DiscountRuleJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     PromotionId = table.Column<int>(type: "int", nullable: true),
                     Note = table.Column<string>(type: "nvarchar(max)", nullable: true),

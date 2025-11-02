@@ -17,16 +17,38 @@
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <a href="/Home" class="sidebar-brand" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 0.5rem;">
+                @{
+                    var dashboardPage = userRole switch
+                    {
+                        "CUSTOMER" => "/Customer/Dashboard",
+                        "DEALER_STAFF" => "/Dealer/Dashboard",
+                        "DEALER_MANAGER" => "/DealerManager/Dashboard",
+                        "EVM_STAFF" => "/EVM/Dashboard",
+                        "EVM_ADMIN" => "/Admin/Dashboard",
+                        _ => "/Auth/Home"
+                    };
+                }
+                <a href="@dashboardPage" class="sidebar-brand" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 0.5rem;">
                     <i class="bi bi-lightning-charge"></i>
                     EVM Portal
                 </a>
             </div>
             
             <nav class="sidebar-nav">
-                <!-- Home link for all users -->
+                <!-- Dashboard link for all users -->
                 <div class="nav-section">
-                    <a class="nav-item" href="/Home">
+                    @{
+                        var homePage = userRole switch
+                        {
+                            "CUSTOMER" => "/Customer/Dashboard",
+                            "DEALER_STAFF" => "/Dealer/Dashboard",
+                            "DEALER_MANAGER" => "/DealerManager/Dashboard",
+                            "EVM_STAFF" => "/EVM/Dashboard",
+                            "EVM_ADMIN" => "/Admin/Dashboard",
+                            _ => "/Auth/Home"
+                        };
+                    }
+                    <a class="nav-item" href="@homePage">
                         <i class="bi bi-house-door"></i> Trang chủ
                     </a>
                 </div>

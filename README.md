@@ -2,11 +2,6 @@
 
 > EVM Dealer Portal - Hệ thống quản lý đại lý xe điện
 
-## 📚 Tài liệu
-
-- **[ROADMAP.md](ROADMAP.md)** - 📖 **Tài liệu tổng hợp duy nhất** (Requirements + Database + Roadmap + Progress + Guidelines)
-- **[requirements.md](requirements.md)** - Yêu cầu chức năng chi tiết (tham khảo)
-- **[database.md](database.md)** - Thiết kế database chi tiết (tham khảo)
 
 ## 🚀 Quick Start
 
@@ -49,7 +44,3 @@ Sau khi seed data, dùng các tài khoản sau để đăng nhập:
 - ✅ 3 Vehicles (Model S, Model 3, Model X)
 - ✅ Price Policies, Stocks, Customer Profiles, Promotions
 
-## 📖 Tham khảo
-
-- **📖 Tài liệu chính:** Xem **[ROADMAP.md](ROADMAP.md)** - Tổng hợp đầy đủ Requirements, Database, Roadmap, Progress, và UI Guidelines
-- **Chi tiết:** Xem `requirements.md` và `database.md` cho thông tin chi tiết

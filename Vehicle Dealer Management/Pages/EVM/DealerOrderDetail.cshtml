@@ -102,7 +102,7 @@
                                 </tr>
                             }
                         </tbody>
-                        <tfoot style="background: var(--black); font-weight: 600;">
+                        <tfoot style="background: var(--surface); border-top: 2px solid var(--border); font-weight: 600;">
                             <tr>
                                 <td colspan="2">TỔNG CỘNG</td>
                                 <td><strong>@Model.Order.Items.Sum(i => i.Quantity) xe</strong></td>
@@ -220,7 +220,7 @@
 </div>
 
 <!-- Reject Modal -->
-<div id="rejectModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center;">
+<div id="rejectModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); z-index: 2000; align-items: center; justify-content: center;">
     <div class="card" style="max-width: 500px; width: 90%;">
         <div class="card-header">
             <h3 class="card-title mb-0">Từ chối đơn hàng</h3>

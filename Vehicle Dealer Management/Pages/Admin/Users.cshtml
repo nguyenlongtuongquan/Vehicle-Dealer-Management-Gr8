@@ -94,12 +94,7 @@
                         <tr>
                             <td><strong>#@user.Id</strong></td>
                             <td>
-                                <div class="flex items-center gap-2">
-                                    <div class="user-avatar" style="width: 32px; height: 32px; font-size: 0.875rem;">
-                                        @user.FullName.Substring(0, 1).ToUpper()
-                                    </div>
-                                    <strong>@user.FullName</strong>
-                                </div>
+                                <strong>@user.FullName</strong>
                             </td>
                             <td class="text-muted">@user.Email</td>
                             <td>@user.Phone</td>
@@ -160,7 +155,7 @@
 }
 
 <!-- Create User Modal -->
-<div id="createModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center;">
+<div id="createModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); z-index: 2000; align-items: center; justify-content: center;">
     <div class="card" style="max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
         <div class="card-header">
             <h3 class="card-title mb-0">Thêm người dùng mới</h3>
@@ -214,7 +209,7 @@
 </div>
 
 <!-- Edit User Modal -->
-<div id="editModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center;">
+<div id="editModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); z-index: 2000; align-items: center; justify-content: center;">
     <div class="card" style="max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
         <div class="card-header">
             <h3 class="card-title mb-0">Chỉnh sửa người dùng</h3>

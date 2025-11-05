@@ -7,11 +7,12 @@
 
 <style>
     .hero-section {
-        background: linear-gradient(135deg, var(--black) 0%, var(--bg) 100%);
+        background: linear-gradient(135deg, #F8F9FA 0%, var(--bg) 100%);
         padding: 6rem 2rem;
         text-align: center;
         position: relative;
         overflow: hidden;
+        border-bottom: 1px solid var(--border);
     }
     
     .hero-section::before {
@@ -21,8 +22,8 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="1" fill="rgba(155,234,251,0.1)"/></svg>') repeat;
-        opacity: 0.3;
+        background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="1" fill="rgba(25,135,84,0.08)"/></svg>') repeat;
+        opacity: 0.5;
     }
     
     .hero-content {
@@ -58,7 +59,7 @@
         padding: 1rem 3rem;
         font-size: 1.125rem;
         background: var(--accent-cyan);
-        color: var(--black);
+        color: white;
         border-radius: var(--radius-sm);
         text-decoration: none;
         font-weight: 600;
@@ -70,7 +71,7 @@
     
     .cta-primary:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(155, 234, 251, 0.3);
+        box-shadow: 0 8px 24px rgba(25, 135, 84, 0.3);
     }
     
     .cta-secondary {
@@ -89,7 +90,7 @@
     }
     
     .cta-secondary:hover {
-        background: rgba(255, 255, 255, 0.05);
+        background: #E9ECEF;
     }
     
     .stats-section {
@@ -164,7 +165,7 @@
     
     .feature-card:hover {
         transform: translateY(-4px);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
         border-color: var(--accent-cyan);
     }
     
@@ -187,7 +188,7 @@
     }
     
     .cta-section {
-        background: linear-gradient(135deg, var(--black) 0%, #1a1a1c 100%);
+        background: linear-gradient(135deg, var(--accent-cyan) 0%, #157347 100%);
         padding: 6rem 2rem;
         text-align: center;
     }
@@ -195,6 +196,14 @@
     .cta-section-content {
         max-width: 600px;
         margin: 0 auto;
+    }
+    
+    .cta-section .section-title {
+        color: white;
+    }
+    
+    .cta-section .section-subtitle {
+        color: rgba(255, 255, 255, 0.9);
     }
     
     .story-section {
@@ -303,13 +312,13 @@
             
             <!-- Right: Vehicle Image -->
             <div style="position: relative;">
-                <div style="background: linear-gradient(135deg, var(--black) 0%, var(--surface) 100%); border-radius: var(--radius); padding: 2rem; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+                <div style="background: linear-gradient(135deg, #F8F9FA 0%, var(--surface) 100%); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem; box-shadow: 0 20px 60px rgba(0,0,0,0.1);">
                     <img src="https://icar.vn/wp-content/uploads/2024/01/top-5-xe-o-to-dien-co-muc-gia-tot-nhat-2023-800x417.jpg" 
                          alt="Xe điện cao cấp" 
-                         style="width: 100%; height: auto; max-height: 400px; border-radius: var(--radius-sm); object-fit: contain; box-shadow: 0 10px 40px rgba(155, 234, 251, 0.2);" />
+                         style="width: 100%; height: auto; max-height: 400px; border-radius: var(--radius-sm); object-fit: contain; box-shadow: 0 10px 40px rgba(25, 135, 84, 0.15);" />
                 </div>
                 <!-- Decorative elements -->
-                <div style="position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; background: var(--accent-cyan); opacity: 0.1; border-radius: 50%; z-index: -1;"></div>
+                <div style="position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; background: var(--accent-cyan); opacity: 0.08; border-radius: 50%; z-index: -1;"></div>
                 <div style="position: absolute; bottom: -30px; left: -30px; width: 150px; height: 150px; background: var(--accent-cyan); opacity: 0.05; border-radius: 50%; z-index: -1;"></div>
             </div>
         </div>
@@ -414,11 +423,11 @@
             Đăng ký ngay hôm nay để trải nghiệm hệ thống quản lý đại lý xe điện hiện đại nhất.
         </p>
         <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-            <a href="/Register" class="cta-primary">
+            <a href="/Register" class="cta-primary" style="background: white; color: var(--accent-cyan);">
                 <i class="bi bi-person-plus"></i>
                 Đăng ký miễn phí
             </a>
-            <a href="/Login" class="cta-secondary">
+            <a href="/Login" class="cta-secondary" style="background: rgba(255, 255, 255, 0.2); color: white; border-color: white;">
                 <i class="bi bi-box-arrow-in-right"></i>
                 Đăng nhập
             </a>
@@ -427,7 +436,7 @@
 </section>
 
 <!-- Footer -->
-<footer style="background: var(--black); padding: 3rem 2rem; border-top: 1px solid var(--border);">
+<footer style="background: var(--surface); padding: 3rem 2rem; border-top: 1px solid var(--border);">
     <div style="max-width: 1200px; margin: 0 auto; text-align: center;">
         <div style="margin-bottom: 2rem;">
             <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-heading); margin-bottom: 1rem;">

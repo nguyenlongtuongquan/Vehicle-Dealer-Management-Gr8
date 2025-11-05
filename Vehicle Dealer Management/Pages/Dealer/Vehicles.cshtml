@@ -78,7 +78,7 @@
                         @await Html.PartialAsync("_StatusBadge", vehicle.Status)
                     </div>
                 
-                <div style="background: var(--black); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1rem;">
+                <div style="background: var(--surface); border: 1px solid var(--border); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1rem;">
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-muted">Giá bán lẻ</span>
                         <strong style="color: var(--accent-cyan); font-size: 1.125rem;">@vehicle.Msrp.ToString("N0") VND</strong>
@@ -94,7 +94,7 @@
                     <div class="flex gap-1">
                         @foreach (var color in vehicle.AvailableColors)
                         {
-                            <div style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.75rem; background: var(--black); border-radius: 999px; font-size: 0.875rem;">
+                            <div style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.75rem; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; font-size: 0.875rem;">
                                 <div style="width: 12px; height: 12px; border-radius: 50%; background: @GetColorHex(color.Color); border: 1px solid var(--border);"></div>
                                 <span>@color.Qty</span>
                             </div>

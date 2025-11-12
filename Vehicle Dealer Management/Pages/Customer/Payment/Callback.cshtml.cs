@@ -114,8 +114,24 @@ namespace Vehicle_Dealer_Management.Pages.Customer.Payment
                 if (isSuccess)
                 {
                     // Tạo payment record
-                    var metaJson = $"{{\"TransactionId\":\"{transactionId}\",\"Provider\":\"{method}\"}}";
-                    await _paymentService.CreatePaymentAsync(orderId, method, amount, metaJson);
+                    // Với môi trường test MoMo ATM, số tiền gửi đi có thể là số tiền đã "scale down".
+                    // Theo yêu cầu: nếu MoMo báo thành công thì xem như hoàn tất thanh toán đơn hàng.
+                    // Vì vậy, ghi nhận khoản thanh toán bằng đúng số tiền còn lại.
+                    var orderForCalc = await _salesDocumentService.GetSalesDocumentWithDetailsAsync(orderId);
+                    if (orderForCalc == null || orderForCalc.Lines == null || orderForCalc.Type != "ORDER")
+                    {
+                        return;
+                    }
+
+                    var totalAmount = orderForCalc.Lines.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue);
+                    var totalPaidSoFar = await _paymentService.GetTotalPaidAmountAsync(orderId);
+                    var remainingAmount = totalAmount - totalPaidSoFar;
+                    if (remainingAmount < 0) remainingAmount = 0;
+
+                    var amountToRecord = remainingAmount > 0 ? remainingAmount : amount;
+
+                    var metaJson = $"{{\"TransactionId\":\"{transactionId}\",\"Provider\":\"{method}\",\"Note\":\"Auto-complete in test mode\"}}";
+                    await _paymentService.CreatePaymentAsync(orderId, method, amountToRecord, metaJson);
 
                     TempData["Success"] = $"Thanh toán thành công! Số tiền: {amount:N0} VND";
                 }

@@ -1,0 +1,117 @@
+@page
+@model Vehicle_Dealer_Management.Pages.Dealer.Sales.ContractsModel
+@{
+    ViewData["Title"] = "Qu?n l? h?p ð?ng";
+}
+
+@await Html.PartialAsync("_PageHeader")
+
+<div class="content-header">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="content-title">Qu?n l? h?p ð?ng</h1>
+            <p class="content-subtitle">Theo d?i và qu?n l? h?p ð?ng mua bán xe</p>
+        </div>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="grid grid-cols-4 mb-4">
+    <div class="stat-card">
+        <div class="stat-label">T?ng h?p ð?ng</div>
+        <div class="stat-value">@Model.TotalCount</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Ðang ho?t ð?ng</div>
+        <div class="stat-value" style="color: var(--success);">@Model.ActiveCount</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Hoàn thành</div>
+        <div class="stat-value" style="color: var(--info);">@Model.CompletedCount</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Ð? h?y</div>
+        <div class="stat-value" style="color: var(--error);">@Model.TerminatedCount</div>
+    </div>
+</div>
+
+<!-- Status Tabs -->
+<div class="card mb-4">
+    <div class="card-body" style="padding: 0;">
+        <div style="display: flex; border-bottom: 1px solid var(--border); flex-wrap: wrap;">
+            <a href="?status=all" class="tab-btn @(Model.StatusFilter == "all" ? "active" : "")" style="padding: 1rem 1.5rem; text-decoration: none; color: inherit; border-bottom: 2px solid @(Model.StatusFilter == "all" ? "var(--accent-cyan)" : "transparent");">
+                T?t c?
+            </a>
+            <a href="?status=ACTIVE" class="tab-btn @(Model.StatusFilter == "ACTIVE" ? "active" : "")" style="padding: 1rem 1.5rem; text-decoration: none; color: inherit; border-bottom: 2px solid @(Model.StatusFilter == "ACTIVE" ? "var(--accent-cyan)" : "transparent");">
+                Ðang ho?t ð?ng
+            </a>
+            <a href="?status=COMPLETED" class="tab-btn @(Model.StatusFilter == "COMPLETED" ? "active" : "")" style="padding: 1rem 1.5rem; text-decoration: none; color: inherit; border-bottom: 2px solid @(Model.StatusFilter == "COMPLETED" ? "var(--accent-cyan)" : "transparent");">
+                Hoàn thành
+            </a>
+            <a href="?status=TERMINATED" class="tab-btn @(Model.StatusFilter == "TERMINATED" ? "active" : "")" style="padding: 1rem 1.5rem; text-decoration: none; color: inherit; border-bottom: 2px solid @(Model.StatusFilter == "TERMINATED" ? "var(--accent-cyan)" : "transparent");">
+                Ð? h?y
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Contracts Table -->
+<div class="card">
+    <div class="card-body">
+        @if (Model.Contracts.Any())
+        {
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>M? h?p ð?ng</th>
+                            <th>Khách hàng</th>
+                            <th>Ngày k?</th>
+                            <th>S? xe</th>
+                            <th>T?ng giá tr?</th>
+                            <th>Tr?ng thái</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var contract in Model.Contracts)
+                        {
+                            <tr>
+                                <td><strong>CTR-@contract.Id.ToString("D6")</strong></td>
+                                <td>
+                                    <div><strong>@contract.CustomerName</strong></div>
+                                    <div class="text-muted" style="font-size: 0.875rem;">@contract.CustomerPhone</div>
+                                </td>
+                                <td>@contract.SignedAt.ToString("dd/MM/yyyy")</td>
+                                <td>@contract.VehicleCount xe</td>
+                                <td><strong style="color: var(--accent-cyan);">@contract.TotalAmount.ToString("N0") VND</strong></td>
+                                <td>
+                                    @await Html.PartialAsync("_StatusBadge", contract.Status)
+                                </td>
+                                <td>
+                                    <a href="/Dealer/Sales/ContractDetail?id=@contract.Id" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-eye"></i> Chi ti?t
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-state-icon">??</div>
+                <div class="empty-state-title">Chýa có h?p ð?ng</div>
+                <div class="empty-state-text">H?p ð?ng s? ðý?c t?o t? ð?ng khi ðõn hàng ðý?c thanh toán ð?y ð?</div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        .tab-btn:hover { background: rgba(255,255,255,0.05); }
+    </style>
+}

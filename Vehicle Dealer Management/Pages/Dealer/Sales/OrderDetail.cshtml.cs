@@ -381,6 +381,35 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
             return RedirectToPage(new { id });
         }
 
+        public async Task<IActionResult> OnPostCreateContractAsync(int id)
+        {
+            var dealerId = HttpContext.Session.GetString("DealerId");
+            if (string.IsNullOrEmpty(dealerId))
+            {
+                return RedirectToPage("/Auth/Login");
+            }
+
+            var dealerIdInt = int.Parse(dealerId);
+            var order = await _salesDocumentService.GetSalesDocumentWithDetailsAsync(id);
+
+            if (order == null || order.DealerId != dealerIdInt || order.Type != "ORDER")
+            {
+                return NotFound();
+            }
+
+            try
+            {
+                var contract = await _salesDocumentService.ConvertOrderToContractAsync(id);
+                TempData["Success"] = $"Tạo hợp đồng thành công! Mã hợp đồng: CTR-{contract.Id:D6}";
+                return RedirectToPage("/Dealer/Sales/ContractDetail", new { id = contract.Id });
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Lỗi khi tạo hợp đồng: {ex.Message}";
+                return RedirectToPage(new { id });
+            }
+        }
+
         public class OrderDetailViewModel
         {
             public int Id { get; set; }

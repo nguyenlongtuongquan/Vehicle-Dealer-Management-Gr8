@@ -10,6 +10,7 @@ namespace Vehicle_Dealer_Management.BLL.IService
         Task<IEnumerable<SalesDocument>> GetSalesDocumentsByDateRangeAsync(DateTime startDate, DateTime endDate, string? type = null);
         Task<SalesDocument> CreateQuoteAsync(int dealerId, int customerId, int createdBy, int? promotionId = null);
         Task<SalesDocument> ConvertQuoteToOrderAsync(int quoteId);
+        Task<SalesDocument> ConvertOrderToContractAsync(int orderId);
         Task<SalesDocument> UpdateSalesDocumentStatusAsync(int id, string status);
         Task<bool> SalesDocumentExistsAsync(int id);
         Task<bool> HasSalesDocumentLinesAsync(int vehicleId);

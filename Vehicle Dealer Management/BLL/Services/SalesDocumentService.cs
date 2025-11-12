@@ -11,7 +11,7 @@ namespace Vehicle_Dealer_Management.BLL.Services
         private readonly ISalesDocumentRepository _salesDocumentRepository;
         private readonly IDealerRepository _dealerRepository;
         private readonly ICustomerRepository _customerRepository;
-        private readonly ApplicationDbContext _context; // Cần để thao tác với SalesDocumentLine
+        private readonly ApplicationDbContext _context;
 
         public SalesDocumentService(
             ISalesDocumentRepository salesDocumentRepository,
@@ -96,6 +96,77 @@ namespace Vehicle_Dealer_Management.BLL.Services
 
             await _salesDocumentRepository.UpdateAsync(quote);
             return quote;
+        }
+
+        public async Task<SalesDocument> ConvertOrderToContractAsync(int orderId)
+        {
+            var order = await _salesDocumentRepository.GetSalesDocumentWithDetailsAsync(orderId);
+            if (order == null)
+            {
+                throw new KeyNotFoundException($"Order with ID {orderId} not found");
+            }
+
+            if (order.Type != "ORDER")
+            {
+                throw new InvalidOperationException("Document is not an ORDER");
+            }
+
+            // Validate order is fully paid
+            if (order.Status != "PAID" && order.Status != "DELIVERED")
+            {
+                throw new InvalidOperationException("Order must be fully paid before converting to contract");
+            }
+
+            // Check if already has a contract
+            var existingContract = await _context.SalesDocuments
+                .AnyAsync(s => s.Type == "CONTRACT" && 
+                              s.CustomerId == order.CustomerId && 
+                              s.DealerId == order.DealerId &&
+                              s.CreatedAt >= order.CreatedAt.AddHours(-24));
+
+            if (existingContract)
+            {
+                throw new InvalidOperationException("Contract already exists for this order");
+            }
+
+            // Create new contract from order
+            var contract = new SalesDocument
+            {
+                Type = "CONTRACT",
+                DealerId = order.DealerId,
+                CustomerId = order.CustomerId,
+                Status = "ACTIVE",
+                PromotionId = order.PromotionId,
+                SignedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = order.CreatedBy
+            };
+
+            _context.SalesDocuments.Add(contract);
+            await _context.SaveChangesAsync();
+
+            // Copy all lines from Order to Contract
+            if (order.Lines != null && order.Lines.Any())
+            {
+                foreach (var orderLine in order.Lines)
+                {
+                    var contractLine = new SalesDocumentLine
+                    {
+                        SalesDocumentId = contract.Id,
+                        VehicleId = orderLine.VehicleId,
+                        ColorCode = orderLine.ColorCode,
+                        Qty = orderLine.Qty,
+                        UnitPrice = orderLine.UnitPrice,
+                        DiscountValue = orderLine.DiscountValue
+                    };
+
+                    _context.SalesDocumentLines.Add(contractLine);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            return contract;
         }
 
         public async Task<SalesDocument> UpdateSalesDocumentStatusAsync(int id, string status)

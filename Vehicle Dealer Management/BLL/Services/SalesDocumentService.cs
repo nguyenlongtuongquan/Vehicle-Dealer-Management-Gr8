@@ -10,18 +10,22 @@ namespace Vehicle_Dealer_Management.BLL.Services
     {
         private readonly ISalesDocumentRepository _salesDocumentRepository;
         private readonly IDealerRepository _dealerRepository;
+<<<<<<< HEAD
         private readonly ICustomerRepository _customerRepository;
+=======
+        private readonly ICustomerProfileRepository _customerProfileRepository; // ✅ THAY ĐỔI
+>>>>>>> 3853211877806d5d16ca4846bbcf22a49d5cc825
         private readonly ApplicationDbContext _context;
 
         public SalesDocumentService(
             ISalesDocumentRepository salesDocumentRepository,
             IDealerRepository dealerRepository,
-            ICustomerRepository customerRepository,
+            ICustomerProfileRepository customerProfileRepository, // ✅ THAY ĐỔI
             ApplicationDbContext context)
         {
             _salesDocumentRepository = salesDocumentRepository;
             _dealerRepository = dealerRepository;
-            _customerRepository = customerRepository;
+            _customerProfileRepository = customerProfileRepository; // ✅ THAY ĐỔI
             _context = context;
         }
 
@@ -54,9 +58,9 @@ namespace Vehicle_Dealer_Management.BLL.Services
                 throw new KeyNotFoundException($"Dealer with ID {dealerId} not found");
             }
 
-            // Validate customer exists
-            var customer = await _customerRepository.GetByIdAsync(customerId);
-            if (customer == null)
+            // ✅ SỬA: Validate customer profile exists (thay vì Customer)
+            var customerProfile = await _customerProfileRepository.GetByIdAsync(customerId);
+            if (customerProfile == null)
             {
                 throw new KeyNotFoundException($"Customer with ID {customerId} not found");
             }
@@ -65,7 +69,7 @@ namespace Vehicle_Dealer_Management.BLL.Services
             {
                 Type = "QUOTE",
                 DealerId = dealerId,
-                CustomerId = customerId,
+                CustomerId = customerId, // Lưu CustomerProfile.Id
                 Status = "DRAFT",
                 PromotionId = promotionId,
                 CreatedAt = DateTime.UtcNow,
@@ -194,4 +198,3 @@ namespace Vehicle_Dealer_Management.BLL.Services
         }
     }
 }
-

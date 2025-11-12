@@ -33,7 +33,8 @@ namespace Vehicle_Dealer_Management.Pages.Customer.Payment
                 // Parse callback data
                 var callbackData = new Dictionary<string, string>();
                 
-                if (provider?.ToUpper() == "MOMO")
+                if (string.Equals(provider, "MOMO", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(provider, "MOMO_ATM", StringComparison.OrdinalIgnoreCase))
                 {
                     // MoMo sends JSON
                     var jsonData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(body);
@@ -48,7 +49,8 @@ namespace Vehicle_Dealer_Management.Pages.Customer.Payment
                     var result = await _paymentGatewayService.ProcessMoMoCallbackAsync(callbackData);
                     if (result.IsSuccess && !string.IsNullOrEmpty(result.OrderId) && result.Amount.HasValue)
                     {
-                        await ProcessPaymentAsync(result.OrderId, result.Amount.Value, "MOMO", result.TransactionId);
+                        var methodCode = string.Equals(provider, "MOMO_ATM", StringComparison.OrdinalIgnoreCase) ? "MOMO_ATM" : "MOMO";
+                        await ProcessPaymentAsync(result.OrderId, result.Amount.Value, methodCode, result.TransactionId);
                     }
                 }
                 else if (provider?.ToUpper() == "VNPAY")

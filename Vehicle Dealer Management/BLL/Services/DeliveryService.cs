@@ -3,6 +3,7 @@ using Vehicle_Dealer_Management.DAL.IRepository;
 using Vehicle_Dealer_Management.BLL.IService;
 using Vehicle_Dealer_Management.DAL.Data;
 using Microsoft.EntityFrameworkCore;
+using Vehicle_Dealer_Management.DAL.Constants;
 
 namespace Vehicle_Dealer_Management.BLL.Services
 {
@@ -12,6 +13,7 @@ namespace Vehicle_Dealer_Management.BLL.Services
         private readonly ISalesDocumentRepository _salesDocumentRepository;
         private readonly ApplicationDbContext _context;
         private readonly IPaymentService _paymentService;
+        private readonly IContractService _contractService;
         private readonly INotificationService? _notificationService;
 
         public DeliveryService(
@@ -19,12 +21,14 @@ namespace Vehicle_Dealer_Management.BLL.Services
             ISalesDocumentRepository salesDocumentRepository,
             ApplicationDbContext context,
             IPaymentService paymentService,
+            IContractService contractService,
             INotificationService? notificationService = null)
         {
             _deliveryRepository = deliveryRepository;
             _salesDocumentRepository = salesDocumentRepository;
             _context = context;
             _paymentService = paymentService;
+            _contractService = contractService;
             _notificationService = notificationService;
         }
 
@@ -50,6 +54,11 @@ namespace Vehicle_Dealer_Management.BLL.Services
             if (salesDocument == null)
             {
                 throw new KeyNotFoundException($"SalesDocument with ID {salesDocumentId} not found");
+            }
+
+            if (salesDocument.Type == "ORDER")
+            {
+                await EnsureOrderHasSignedContractAsync(salesDocument.Id);
             }
 
             // Check if delivery already exists
@@ -97,6 +106,8 @@ namespace Vehicle_Dealer_Management.BLL.Services
                 throw new KeyNotFoundException($"Delivery with ID {deliveryId} not found");
             }
 
+            await EnsureOrderHasSignedContractAsync(delivery.SalesDocumentId);
+
             delivery.DeliveredDate = deliveredDate;
             delivery.Status = "DELIVERED";
             delivery.HandoverNote = handoverNote ?? delivery.HandoverNote;
@@ -123,6 +134,8 @@ namespace Vehicle_Dealer_Management.BLL.Services
                 throw new KeyNotFoundException($"Delivery with ID {deliveryId} not found");
             }
 
+            await EnsureOrderHasSignedContractAsync(delivery.SalesDocumentId);
+
             // Validate status
             var validStatuses = new[] { "SCHEDULED", "IN_TRANSIT", "DELIVERED", "CANCELLED" };
             if (!validStatuses.Contains(status))
@@ -142,6 +155,8 @@ namespace Vehicle_Dealer_Management.BLL.Services
             {
                 throw new KeyNotFoundException($"Delivery with ID {deliveryId} not found");
             }
+
+            await EnsureOrderHasSignedContractAsync(delivery.SalesDocumentId);
 
             if (delivery.Status != "SCHEDULED")
             {
@@ -170,6 +185,8 @@ namespace Vehicle_Dealer_Management.BLL.Services
             {
                 throw new KeyNotFoundException($"Delivery with ID {deliveryId} not found");
             }
+
+            await EnsureOrderHasSignedContractAsync(delivery.SalesDocumentId);
 
             if (delivery.Status != "IN_TRANSIT")
             {
@@ -205,6 +222,15 @@ namespace Vehicle_Dealer_Management.BLL.Services
             }
 
             return delivery;
+        }
+
+        private async Task EnsureOrderHasSignedContractAsync(int orderId)
+        {
+            var contract = await _contractService.GetContractByOrderIdAsync(orderId);
+            if (contract == null || !SalesContractStatus.IsSigned(contract.Status))
+            {
+                throw new InvalidOperationException("Đơn hàng chưa có hợp đồng được ký, không thể thực hiện thao tác giao xe.");
+            }
         }
 
         public async Task<Delivery> CompleteDeliveryAsync(int deliveryId, DateTime deliveredDate, string? handoverNote = null)

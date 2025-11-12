@@ -1,25 +1,37 @@
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.BLL.IService;
+using Vehicle_Dealer_Management.DAL.Constants;
 using Vehicle_Dealer_Management.DAL.Data;
+using System.IO;
+using System.Linq;
 
 namespace Vehicle_Dealer_Management.Pages.Customer
 {
     public class QuoteDetailModel : PageModel
     {
         private readonly ISalesDocumentService _salesDocumentService;
+        private readonly IContractService _contractService;
         private readonly ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _environment;
 
         public QuoteDetailModel(
             ISalesDocumentService salesDocumentService,
-            ApplicationDbContext context)
+            IContractService contractService,
+            ApplicationDbContext context,
+            IWebHostEnvironment environment)
         {
             _salesDocumentService = salesDocumentService;
+            _contractService = contractService;
             _context = context;
+            _environment = environment;
         }
 
         public QuoteDetailViewModel Quote { get; set; } = null!;
+        public ContractViewModel? Contract { get; set; }
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
@@ -87,6 +99,20 @@ namespace Vehicle_Dealer_Management.Pages.Customer
 
                 TotalAmount = totalAmount
             };
+
+            var contract = await _contractService.GetContractByQuoteIdAsync(quote.Id);
+            if (contract != null && contract.CustomerId == customer.Id)
+            {
+                Contract = new ContractViewModel
+                {
+                    Id = contract.Id,
+                    Status = contract.Status,
+                    CreatedAt = contract.CreatedAt,
+                    CustomerSignedAt = contract.CustomerSignedAt,
+                    CustomerSignatureUrl = contract.CustomerSignatureUrl,
+                    DealerId = contract.DealerId
+                };
+            }
 
             return Page();
         }
@@ -156,6 +182,79 @@ namespace Vehicle_Dealer_Management.Pages.Customer
             return RedirectToPage("/Customer/MyQuotes");
         }
 
+        public async Task<IActionResult> OnPostUploadSignatureAsync(int id, IFormFile? signatureFile)
+        {
+            var userId = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrEmpty(userId))
+            {
+                return RedirectToPage("/Auth/Login");
+            }
+
+            var userIdInt = int.Parse(userId);
+
+            var customer = await _context.CustomerProfiles
+                .FirstOrDefaultAsync(c => c.UserId == userIdInt);
+
+            if (customer == null)
+            {
+                return RedirectToPage("/Auth/Profile");
+            }
+
+            var quote = await _salesDocumentService.GetSalesDocumentWithDetailsAsync(id);
+
+            if (quote == null || quote.CustomerId != customer.Id || quote.Type != "QUOTE")
+            {
+                return NotFound();
+            }
+
+            var contract = await _contractService.GetContractByQuoteIdAsync(id);
+            if (contract == null || contract.CustomerId != customer.Id)
+            {
+                TempData["Error"] = "Không tìm thấy hợp đồng để ký.";
+                return RedirectToPage("/Customer/QuoteDetail", new { id });
+            }
+
+            if (SalesContractStatus.IsSigned(contract.Status))
+            {
+                TempData["Info"] = "Bạn đã tải chữ ký cho hợp đồng này.";
+                return RedirectToPage("/Customer/QuoteDetail", new { id });
+            }
+
+            if (signatureFile == null || signatureFile.Length == 0)
+            {
+                TempData["Error"] = "Vui lòng chọn ảnh chữ ký hợp lệ.";
+                return RedirectToPage("/Customer/QuoteDetail", new { id });
+            }
+
+            var allowedExtensions = new[] { ".png", ".jpg", ".jpeg" };
+            var extension = Path.GetExtension(signatureFile.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(extension))
+            {
+                TempData["Error"] = "Chỉ cho phép định dạng ảnh PNG hoặc JPG.";
+                return RedirectToPage("/Customer/QuoteDetail", new { id });
+            }
+
+            var uploadsDir = Path.Combine(_environment.WebRootPath, "uploads", "signatures");
+            if (!Directory.Exists(uploadsDir))
+            {
+                Directory.CreateDirectory(uploadsDir);
+            }
+
+            var fileName = $"contract_{id}_{DateTime.UtcNow:yyyyMMddHHmmssfff}{extension}";
+            var filePath = Path.Combine(uploadsDir, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await signatureFile.CopyToAsync(stream);
+            }
+
+            var relativePath = $"/uploads/signatures/{fileName}".Replace("\\", "/");
+            await _contractService.SaveCustomerSignatureAsync(contract.Id, relativePath);
+
+            TempData["Success"] = "Đã tải chữ ký thành công. Dealer sẽ kiểm tra và tiếp tục xử lý đơn hàng.";
+            return RedirectToPage("/Customer/QuoteDetail", new { id });
+        }
+
         public class QuoteDetailViewModel
         {
             public int Id { get; set; }
@@ -189,6 +288,16 @@ namespace Vehicle_Dealer_Management.Pages.Customer
             public decimal UnitPrice { get; set; }
             public decimal DiscountValue { get; set; }
             public decimal LineTotal { get; set; }
+        }
+
+        public class ContractViewModel
+        {
+            public int Id { get; set; }
+            public string Status { get; set; } = "";
+            public DateTime CreatedAt { get; set; }
+            public DateTime? CustomerSignedAt { get; set; }
+            public string? CustomerSignatureUrl { get; set; }
+            public int DealerId { get; set; }
         }
     }
 }

@@ -11,17 +11,20 @@ namespace Vehicle_Dealer_Management.BLL.Services
         private readonly ISalesDocumentRepository _salesDocumentRepository;
         private readonly IDealerRepository _dealerRepository;
         private readonly ICustomerProfileRepository _customerProfileRepository; // ✅ THAY ĐỔI
+        private readonly IContractService _contractService;
         private readonly ApplicationDbContext _context;
 
         public SalesDocumentService(
             ISalesDocumentRepository salesDocumentRepository,
             IDealerRepository dealerRepository,
             ICustomerProfileRepository customerProfileRepository, // ✅ THAY ĐỔI
+            IContractService contractService,
             ApplicationDbContext context)
         {
             _salesDocumentRepository = salesDocumentRepository;
             _dealerRepository = dealerRepository;
             _customerProfileRepository = customerProfileRepository; // ✅ THAY ĐỔI
+            _contractService = contractService;
             _context = context;
         }
 
@@ -88,6 +91,12 @@ namespace Vehicle_Dealer_Management.BLL.Services
                 throw new InvalidOperationException("Document is not a QUOTE");
             }
 
+            var contract = await _contractService.GetContractByQuoteIdAsync(quote.Id);
+            if (contract == null || !DAL.Constants.SalesContractStatus.IsSigned(contract.Status))
+            {
+                throw new InvalidOperationException("Không thể chuyển báo giá thành đơn hàng khi chưa có hợp đồng được ký.");
+            }
+
             // Convert to ORDER
             quote.Type = "ORDER";
             quote.Status = "CONFIRMED";
@@ -95,6 +104,8 @@ namespace Vehicle_Dealer_Management.BLL.Services
             quote.UpdatedAt = DateTime.UtcNow;
 
             await _salesDocumentRepository.UpdateAsync(quote);
+
+            await _contractService.MarkContractLinkedToOrderAsync(contract.Id, quote.Id);
             return quote;
         }
 

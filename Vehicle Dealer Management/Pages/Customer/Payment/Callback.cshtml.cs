@@ -47,7 +47,8 @@ namespace Vehicle_Dealer_Management.Pages.Customer.Payment
 
             try
             {
-                if (provider.ToUpper() == "MOMO")
+                if (provider.Equals("MOMO", StringComparison.OrdinalIgnoreCase) ||
+                    provider.Equals("MOMO_ATM", StringComparison.OrdinalIgnoreCase))
                 {
                     // MoMo trả về trong query string khi redirect
                     foreach (var query in Request.Query)
@@ -58,7 +59,8 @@ namespace Vehicle_Dealer_Management.Pages.Customer.Payment
                     var result = await _paymentGatewayService.ProcessMoMoCallbackAsync(callbackData);
                     // Nếu không có orderId từ callback, dùng orderId từ query
                     var finalOrderId = result.OrderId ?? orderId.Value.ToString();
-                    await ProcessPaymentResultAsync(finalOrderId, result.Amount ?? 0, "MOMO", result.TransactionId, result.IsSuccess, result.Message ?? "Payment processed");
+                    var methodCode = provider.Equals("MOMO_ATM", StringComparison.OrdinalIgnoreCase) ? "MOMO_ATM" : "MOMO";
+                    await ProcessPaymentResultAsync(finalOrderId, result.Amount ?? 0, methodCode, result.TransactionId, result.IsSuccess, result.Message ?? "Payment processed");
                     
                     Status = result.IsSuccess ? "success" : "failed";
                     Message = result.Message ?? (result.IsSuccess ? "Thanh toán thành công" : "Thanh toán thất bại");

@@ -11,6 +11,7 @@
     // Tính toán trạng thái đơn hàng (dùng chung cho toàn bộ trang)
     var isDeliveredOrder = Model.Order.Status == "DELIVERED" || Model.Order.Delivery?.Status == "DELIVERED" || (Model.Order.Delivery != null && Model.Order.Delivery.CustomerConfirmed);
     var hasOutstandingDebt = isDeliveredOrder && Model.Order.RemainingAmount > 0;
+    var hasSignedContract = Model.Contract?.IsSigned == true;
 }
 
 <div class="content-header">
@@ -25,24 +26,40 @@
             </a>
             @if (Model.Order.Status == "OPEN" || hasOutstandingDebt)
             {
-                <button class="btn btn-primary" onclick="document.getElementById('paymentModal').style.display='flex'">
-                    <i class="bi bi-cash-coin"></i> @(hasOutstandingDebt ? "Thanh toán số tiền còn lại" : "Thêm thanh toán")
-                </button>
+                if (hasSignedContract)
+                {
+                    <button class="btn btn-primary" onclick="document.getElementById('paymentModal').style.display='flex'">
+                        <i class="bi bi-cash-coin"></i> @(hasOutstandingDebt ? "Thanh toán số tiền còn lại" : "Thêm thanh toán")
+                    </button>
+                }
+                else
+                {
+                    <button class="btn btn-primary" disabled title="Phải có hợp đồng đã ký mới được ghi nhận thanh toán.">
+                        <i class="bi bi-file-earmark-lock"></i> Thanh toán bị khóa
+                    </button>
+                }
             }
             @{
                 var totalAmount = Model.Order.TotalAmount;
                 var paidAmount = Model.Order.TotalPaid;
                 var paymentPercentage = totalAmount > 0 ? (paidAmount / totalAmount) * 100 : 0;
-                var canScheduleDelivery = Model.Order.Delivery == null && 
-                                         Model.Order.Status != "DELIVERED" && 
-                                         Model.Order.Status != "CANCELLED" &&
-                                         paymentPercentage >= 30;
+                var canScheduleDelivery = hasSignedContract &&
+                                          Model.Order.Delivery == null && 
+                                          Model.Order.Status != "DELIVERED" && 
+                                          Model.Order.Status != "CANCELLED" &&
+                                          paymentPercentage >= 30;
             }
             @if (canScheduleDelivery)
             {
                 <button class="btn btn-primary" onclick="document.getElementById('deliveryModal').style.display='flex'">
                     <i class="bi bi-truck"></i> Lên lịch giao xe
                 </button>
+            }
+            else if (!hasSignedContract && Model.Order.Delivery == null && Model.Order.Status != "DELIVERED" && Model.Order.Status != "CANCELLED")
+            {
+                <div class="alert alert-warning" style="display: inline-block; margin: 0; padding: 0.5rem 1rem;">
+                    <i class="bi bi-exclamation-triangle"></i> Chỉ lên lịch giao xe sau khi khách hàng ký hợp đồng.
+                </div>
             }
             else if (Model.Order.Delivery == null && Model.Order.Status != "DELIVERED" && Model.Order.Status != "CANCELLED" && paymentPercentage < 30)
             {
@@ -240,6 +257,57 @@
 
     <!-- Right Column: Payments & Delivery -->
     <div>
+        @if (Model.Contract != null)
+        {
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="card-title">Hợp đồng đơn hàng</h3>
+                </div>
+                <div class="card-body">
+                    <div style="margin-bottom: 0.75rem;">
+                        <div class="text-muted" style="font-size: 0.875rem;">Mã hợp đồng</div>
+                        <div><strong>#@Model.Contract.Id</strong></div>
+                    </div>
+                    <div style="margin-bottom: 0.75rem;">
+                        <div class="text-muted" style="font-size: 0.875rem;">Trạng thái</div>
+                        <div>@await Html.PartialAsync("_StatusBadge", Model.Contract.Status)</div>
+                    </div>
+                    @if (Model.Contract.SignedAt.HasValue)
+                    {
+                        <div style="margin-bottom: 0.75rem;">
+                            <div class="text-muted" style="font-size: 0.875rem;">Khách hàng ký lúc</div>
+                            <div>@Model.Contract.SignedAt.Value.ToString("dd/MM/yyyy HH:mm")</div>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Contract.SignatureUrl))
+                    {
+                        <div style="margin-bottom: 0.75rem;">
+                            <a href="@Model.Contract.SignatureUrl" target="_blank" class="btn btn-light btn-sm">
+                                <i class="bi bi-image"></i> Xem ảnh chữ ký
+                            </a>
+                        </div>
+                    }
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <a href="/Dealer/Sales/QuoteDetail?id=@Model.Contract.QuoteId" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-file-text"></i> Báo giá nguồn
+                        </a>
+                        @if (!Model.Contract.IsSigned)
+                        {
+                            <div class="alert alert-warning" style="margin: 0; flex: 1 1 100%;">
+                                <i class="bi bi-exclamation-triangle"></i> Chờ khách hàng tải chữ ký. Không thể ghi nhận thanh toán hay giao xe.
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-success" style="margin: 0; flex: 1 1 100%;">
+                                <i class="bi bi-check-circle"></i> Hợp đồng đã ký. Có thể nhận thanh toán và lên lịch giao xe.
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+
         <!-- Payment History -->
         <div class="card mb-4">
             <div class="card-header">
@@ -426,10 +494,13 @@
                     @TempData["Error"]
                 </div>
             }
-            @if (ViewData.ModelState["amount"]?.Errors?.Count > 0)
+            @{
+                var amountState = ViewData.ModelState["amount"];
+            }
+            @if (amountState?.Errors?.Count > 0)
             {
                 <div class="alert alert-error" style="margin-bottom: 1rem; padding: 0.75rem; background: var(--error-bg); border: 1px solid var(--error); border-radius: var(--radius-sm); color: var(--error);">
-                    @ViewData.ModelState["amount"].Errors.First().ErrorMessage
+                    @amountState.Errors.First().ErrorMessage
                 </div>
             }
             <form method="post" asp-page-handler="AddPayment">

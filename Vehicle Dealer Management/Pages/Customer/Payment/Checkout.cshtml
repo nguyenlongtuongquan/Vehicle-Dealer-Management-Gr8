@@ -77,6 +77,23 @@
                     </button>
                 </form>
 
+                <!-- MoMo ATM -->
+                <form method="post" asp-page-handler="ProcessPayment" style="margin: 0;">
+                    <input type="hidden" name="orderId" value="@Model.OrderId" />
+                    <input type="hidden" name="provider" value="momo_atm" />
+                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1.5rem; text-align: left; justify-content: flex-start;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div style="width: 3rem; height: 3rem; background: var(--surface); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-credit-card-2-front" style="font-size: 2rem; color: #AF0B0E;"></i>
+                            </div>
+                            <div>
+                                <div style="font-weight: 600; font-size: 1.125rem;">Thẻ ATM (Napas)</div>
+                                <div class="text-muted" style="font-size: 0.875rem;">Thanh toán qua cổng MoMo bằng thẻ test Napas</div>
+                            </div>
+                        </div>
+                    </button>
+                </form>
+
                 <!-- VNPay -->
                 <form method="post" asp-page-handler="ProcessPayment" style="margin: 0;">
                     <input type="hidden" name="orderId" value="@Model.OrderId" />
@@ -93,6 +110,25 @@
                         </div>
                     </button>
                 </form>
+
+                @if (Model.CanPayCash)
+                {
+                    <!-- Cash payment -->
+                    <form method="post" asp-page-handler="PayCash" style="margin: 0;">
+                        <input type="hidden" name="orderId" value="@Model.OrderId" />
+                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1.5rem; text-align: left; justify-content: flex-start;">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <div style="width: 3rem; height: 3rem; background: var(--surface); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;">
+                                    <i class="bi bi-cash-coin" style="font-size: 2rem; color: var(--success);"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 600; font-size: 1.125rem;">Tiền mặt tại đại lý</div>
+                                    <div class="text-muted" style="font-size: 0.875rem;">Thanh toán trực tiếp số tiền còn lại @Model.RemainingAmount.ToString("N0") VND</div>
+                                </div>
+                            </div>
+                        </button>
+                    </form>
+                }
             </div>
         </div>
     </div>

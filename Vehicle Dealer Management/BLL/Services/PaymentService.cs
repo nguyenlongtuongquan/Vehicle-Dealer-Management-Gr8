@@ -3,6 +3,7 @@ using Vehicle_Dealer_Management.DAL.IRepository;
 using Vehicle_Dealer_Management.BLL.IService;
 using Vehicle_Dealer_Management.DAL.Data;
 using Microsoft.EntityFrameworkCore;
+using Vehicle_Dealer_Management.DAL.Constants;
 
 namespace Vehicle_Dealer_Management.BLL.Services
 {
@@ -10,15 +11,18 @@ namespace Vehicle_Dealer_Management.BLL.Services
     {
         private readonly IPaymentRepository _paymentRepository;
         private readonly ISalesDocumentRepository _salesDocumentRepository;
+        private readonly IContractService _contractService;
         private readonly ApplicationDbContext _context;
 
         public PaymentService(
             IPaymentRepository paymentRepository,
             ISalesDocumentRepository salesDocumentRepository,
+            IContractService contractService,
             ApplicationDbContext context)
         {
             _paymentRepository = paymentRepository;
             _salesDocumentRepository = salesDocumentRepository;
+            _contractService = contractService;
             _context = context;
         }
 
@@ -56,6 +60,15 @@ namespace Vehicle_Dealer_Management.BLL.Services
             if (amount <= 0)
             {
                 throw new ArgumentException("Payment amount must be greater than 0", nameof(amount));
+            }
+
+            if (salesDocument.Type == "ORDER")
+            {
+                var contract = await _contractService.GetContractByOrderIdAsync(salesDocumentId);
+                if (contract == null || !SalesContractStatus.IsSigned(contract.Status))
+                {
+                    throw new InvalidOperationException("Không thể tạo thanh toán khi đơn hàng chưa có hợp đồng được ký bởi khách hàng.");
+                }
             }
 
             var payment = new Payment

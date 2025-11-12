@@ -3,6 +3,7 @@ using Vehicle_Dealer_Management.DAL.Models;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Vehicle_Dealer_Management.DAL.Constants;
 
 namespace Vehicle_Dealer_Management.DAL.Data
 {
@@ -416,6 +417,103 @@ namespace Vehicle_Dealer_Management.DAL.Data
 
                 context.Promotions.AddRange(promotions);
                 context.SaveChanges();
+            }
+
+            // Seed SalesDocuments, SalesDocumentLines, and SalesContracts mẫu
+            if (!context.SalesContracts.Any())
+            {
+                var dealer = context.Dealers.FirstOrDefault();
+                var customer = context.CustomerProfiles.FirstOrDefault();
+                var dealerStaffRoleId = context.Roles.FirstOrDefault(r => r.Code == "DEALER_STAFF")?.Id;
+                User? dealerStaff = null;
+                if (dealer != null && dealerStaffRoleId.HasValue)
+                {
+                    dealerStaff = context.Users.FirstOrDefault(u => u.RoleId == dealerStaffRoleId.Value && u.DealerId == dealer.Id);
+                }
+                var vehicle = context.Vehicles.FirstOrDefault();
+
+                if (dealer != null && customer != null && dealerStaff != null && vehicle != null)
+                {
+                    var quote = context.SalesDocuments.FirstOrDefault(sd =>
+                        sd.Type == "QUOTE" && sd.DealerId == dealer.Id && sd.CustomerId == customer.Id);
+
+                    if (quote == null)
+                    {
+                        quote = new SalesDocument
+                        {
+                            Type = "QUOTE",
+                            DealerId = dealer.Id,
+                            CustomerId = customer.Id,
+                            Status = "CONVERTED",
+                            CreatedAt = DateTime.UtcNow.AddDays(-12),
+                            UpdatedAt = DateTime.UtcNow.AddDays(-7),
+                            CreatedBy = dealerStaff.Id
+                        };
+                        context.SalesDocuments.Add(quote);
+                        context.SaveChanges();
+
+                        context.SalesDocumentLines.Add(new SalesDocumentLine
+                        {
+                            SalesDocumentId = quote.Id,
+                            VehicleId = vehicle.Id,
+                            ColorCode = "BLACK",
+                            Qty = 1,
+                            UnitPrice = 2400000000m,
+                            DiscountValue = 100000000m
+                        });
+                        context.SaveChanges();
+                    }
+
+                    var order = context.SalesDocuments.FirstOrDefault(sd =>
+                        sd.Type == "ORDER" && sd.DealerId == dealer.Id && sd.CustomerId == customer.Id);
+
+                    if (order == null)
+                    {
+                        order = new SalesDocument
+                        {
+                            Type = "ORDER",
+                            DealerId = dealer.Id,
+                            CustomerId = customer.Id,
+                            Status = "OPEN",
+                            CreatedAt = DateTime.UtcNow.AddDays(-6),
+                            UpdatedAt = DateTime.UtcNow.AddDays(-4),
+                            CreatedBy = dealerStaff.Id
+                        };
+                        context.SalesDocuments.Add(order);
+                        context.SaveChanges();
+
+                        context.SalesDocumentLines.Add(new SalesDocumentLine
+                        {
+                            SalesDocumentId = order.Id,
+                            VehicleId = vehicle.Id,
+                            ColorCode = "BLACK",
+                            Qty = 1,
+                            UnitPrice = 2400000000m,
+                            DiscountValue = 100000000m
+                        });
+                        context.SaveChanges();
+                    }
+
+                    if (!context.SalesContracts.Any(c => c.QuoteId == quote.Id))
+                    {
+                        var contract = new SalesContract
+                        {
+                            QuoteId = quote.Id,
+                            OrderId = order?.Id,
+                            DealerId = dealer.Id,
+                            CustomerId = customer.Id,
+                            CreatedBy = dealerStaff.Id,
+                            Status = SalesContractStatus.OrderCreated,
+                            CreatedAt = DateTime.UtcNow.AddDays(-8),
+                            CustomerSignedAt = DateTime.UtcNow.AddDays(-7),
+                            DealerVerifiedAt = DateTime.UtcNow.AddDays(-6),
+                            UpdatedAt = DateTime.UtcNow.AddDays(-5),
+                            CustomerSignatureUrl = "/uploads/signatures/sample-contract.png"
+                        };
+                        context.SalesContracts.Add(contract);
+                        context.SaveChanges();
+                    }
+                }
             }
 
             // Seed Notifications - Chỉ tạo dữ liệu mẫu tối thiểu

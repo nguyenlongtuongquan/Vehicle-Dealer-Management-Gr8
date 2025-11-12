@@ -7,7 +7,7 @@ namespace Vehicle_Dealer_Management.BLL.IService
         /// <summary>
         /// Tạo payment link từ MoMo
         /// </summary>
-        Task<string> CreateMoMoPaymentUrlAsync(int orderId, decimal amount, string returnUrl, string notifyUrl, string orderInfo);
+        Task<string> CreateMoMoPaymentUrlAsync(int orderId, decimal amount, string returnUrl, string notifyUrl, string orderInfo, MoMoPaymentMethod method = MoMoPaymentMethod.Wallet);
 
         /// <summary>
         /// Tạo payment link từ VNPay
@@ -23,6 +23,12 @@ namespace Vehicle_Dealer_Management.BLL.IService
         /// Xác thực và xử lý callback từ VNPay
         /// </summary>
         Task<VNPayPaymentResult> ProcessVNPayCallbackAsync(Dictionary<string, string> vnpParams);
+    }
+
+    public enum MoMoPaymentMethod
+    {
+        Wallet,
+        ATM
     }
 
     public class MoMoPaymentResult

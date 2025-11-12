@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.DAL.Data;
 using Vehicle_Dealer_Management.BLL.IService;
+using Vehicle_Dealer_Management.DAL.Constants;
 
 namespace Vehicle_Dealer_Management.Pages.Customer
 {
@@ -13,22 +14,26 @@ namespace Vehicle_Dealer_Management.Pages.Customer
         private readonly IPaymentService _paymentService;
         private readonly IDeliveryService _deliveryService;
         private readonly IFeedbackService _feedbackService;
+        private readonly IContractService _contractService;
 
         public OrderDetailModel(
             ApplicationDbContext context,
             ISalesDocumentService salesDocumentService,
             IPaymentService paymentService,
             IDeliveryService deliveryService,
-            IFeedbackService feedbackService)
+            IFeedbackService feedbackService,
+            IContractService contractService)
         {
             _context = context;
             _salesDocumentService = salesDocumentService;
             _paymentService = paymentService;
             _deliveryService = deliveryService;
             _feedbackService = feedbackService;
+            _contractService = contractService;
         }
 
         public OrderDetailViewModel Order { get; set; } = null!;
+        public ContractViewModel? Contract { get; set; }
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
@@ -139,6 +144,19 @@ namespace Vehicle_Dealer_Management.Pages.Customer
                     Content = review.Content,
                     CreatedAt = review.CreatedAt,
                     UpdatedAt = review.UpdatedAt
+                };
+            }
+
+            var contract = await _contractService.GetContractByOrderIdAsync(id);
+            if (contract != null && contract.CustomerId == customer.Id)
+            {
+                Contract = new ContractViewModel
+                {
+                    Id = contract.Id,
+                    Status = contract.Status,
+                    SignedAt = contract.CustomerSignedAt,
+                    SignatureUrl = contract.CustomerSignatureUrl,
+                    DealerId = contract.DealerId
                 };
             }
 
@@ -305,6 +323,16 @@ namespace Vehicle_Dealer_Management.Pages.Customer
             public string? HandoverNote { get; set; }
             public bool CustomerConfirmed { get; set; }
             public DateTime? CustomerConfirmedDate { get; set; }
+        }
+
+        public class ContractViewModel
+        {
+            public int Id { get; set; }
+            public string Status { get; set; } = "";
+            public DateTime? SignedAt { get; set; }
+            public string? SignatureUrl { get; set; }
+            public int DealerId { get; set; }
+            public bool IsSigned => SalesContractStatus.IsSigned(Status);
         }
     }
 }

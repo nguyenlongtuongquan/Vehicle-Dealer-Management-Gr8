@@ -16,6 +16,8 @@
         case "APPROVED":
         case "CONFIRMED":
         case "RESOLVED":
+        case "SIGNED":
+        case "ORDER_CREATED":
             badgeClass = "badge-success";
             displayText = status switch
             {
@@ -27,6 +29,8 @@
                 "APPROVED" => "Đã duyệt",
                 "CONFIRMED" => "Đã xác nhận",
                 "RESOLVED" => "Đã giải quyết",
+                "SIGNED" => "Đã ký",
+                "ORDER_CREATED" => "Đã tạo đơn",
                 _ => status
             };
             break;
@@ -37,6 +41,7 @@
         case "REQUESTED":
         case "IN_PROGRESS":
         case "PARTIALLY_PAID":
+        case "PENDING_SIGNATURE":
             badgeClass = "badge-warning";
             displayText = status switch
             {
@@ -46,6 +51,7 @@
                 "REQUESTED" => "Yêu cầu",
                 "IN_PROGRESS" => "Đang xử lý",
                 "PARTIALLY_PAID" => "Trả một phần",
+                "PENDING_SIGNATURE" => "Chờ chữ ký",
                 _ => status
             };
             break;

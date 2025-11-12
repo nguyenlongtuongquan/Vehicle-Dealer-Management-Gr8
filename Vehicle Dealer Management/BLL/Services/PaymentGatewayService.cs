@@ -19,7 +19,7 @@ namespace Vehicle_Dealer_Management.BLL.Services
             _httpClient = httpClient;
         }
 
-        public async Task<string> CreateMoMoPaymentUrlAsync(int orderId, decimal amount, string returnUrl, string notifyUrl, string orderInfo)
+        public async Task<string> CreateMoMoPaymentUrlAsync(int orderId, decimal amount, string returnUrl, string notifyUrl, string orderInfo, MoMoPaymentMethod method = MoMoPaymentMethod.Wallet)
         {
             var momoConfig = _configuration.GetSection("PaymentGateways:MoMo");
             var partnerCode = momoConfig["PartnerCode"] ?? "";
@@ -35,21 +35,25 @@ namespace Vehicle_Dealer_Management.BLL.Services
             var fullReturnUrl = $"{baseUrl}{returnUrl}";
             var fullNotifyUrl = $"{baseUrl}{notifyUrl}";
 
-            // Validation cho MoMo sandbox: min 1,000 VND, max 50,000,000 VND
-            const decimal momoSandboxMinAmount = 1000m;
-            const decimal momoSandboxMaxAmount = 50000000m;
+            // Validation cho MoMo sandbox
+            const decimal momoWalletMinAmount = 1000m;
+            const decimal momoWalletMaxAmount = 50000000m;
+            const decimal momoAtmMinAmount = 1000m;
+            const decimal momoAtmMaxAmount = 5000000m;
+            var sandboxMin = method == MoMoPaymentMethod.ATM ? momoAtmMinAmount : momoWalletMinAmount;
+            var sandboxMax = method == MoMoPaymentMethod.ATM ? momoAtmMaxAmount : momoWalletMaxAmount;
 
             var originalAmount = amount;
 
             // Kiểm tra nếu là sandbox/test mode
             if (!isProduction)
             {
-                if (amount < momoSandboxMinAmount)
+                if (amount < sandboxMin)
                 {
-                    throw new ArgumentException($"Số tiền thanh toán ({amount:N0} VND) nhỏ hơn số tiền tối thiểu cho phép là {momoSandboxMinAmount:N0} VND", nameof(amount));
+                    throw new ArgumentException($"Số tiền thanh toán ({amount:N0} VND) nhỏ hơn số tiền tối thiểu cho phép là {sandboxMin:N0} VND", nameof(amount));
                 }
 
-                if (amount > momoSandboxMaxAmount)
+                if (amount > sandboxMax)
                 {
                     // Nếu bật TestModeScaleDown, tự động scale down số tiền để test
                     if (testModeScaleDownEnabled)
@@ -59,8 +63,8 @@ namespace Vehicle_Dealer_Management.BLL.Services
                             // Tự động scale down theo tỷ lệ: lấy phần nghìn của số tiền gốc
                             // Ví dụ: 2,500,000,000 -> 2500, 1,500,000,000 -> 1500
                             amount = Math.Floor(originalAmount / 1000000m);
-                            // Đảm bảo tối thiểu 1000 VND và tối đa 50,000,000 VND
-                            amount = Math.Max(momoSandboxMinAmount, Math.Min(amount, momoSandboxMaxAmount));
+                            // Đảm bảo nằm trong khoảng min/max sandbox
+                            amount = Math.Max(sandboxMin, Math.Min(amount, sandboxMax));
                         }
                         else if (testModeScaleDownMethod == "fixed" && testModeScaleDownAmount.HasValue)
                         {
@@ -71,13 +75,13 @@ namespace Vehicle_Dealer_Management.BLL.Services
                         {
                             // Fallback: tự động tính theo tỷ lệ
                             amount = Math.Floor(originalAmount / 1000000m);
-                            amount = Math.Max(momoSandboxMinAmount, Math.Min(amount, momoSandboxMaxAmount));
+                            amount = Math.Max(sandboxMin, Math.Min(amount, sandboxMax));
                         }
 
                         // Đảm bảo số tiền sau khi scale down vẫn >= minAmount
-                        if (amount < momoSandboxMinAmount)
+                        if (amount < sandboxMin)
                         {
-                            amount = momoSandboxMinAmount;
+                            amount = sandboxMin;
                         }
                         
                         // Thêm thông tin vào orderInfo để biết đã scale down
@@ -85,8 +89,8 @@ namespace Vehicle_Dealer_Management.BLL.Services
                     }
                     else
                     {
-                        throw new ArgumentException($"Số tiền thanh toán ({amount:N0} VND) lớn hơn số tiền tối đa cho phép trong sandbox là {momoSandboxMaxAmount:N0} VND. " +
-                            $"MoMo sandbox chỉ cho phép thanh toán từ {momoSandboxMinAmount:N0} VND đến {momoSandboxMaxAmount:N0} VND. " +
+                        throw new ArgumentException($"Số tiền thanh toán ({amount:N0} VND) lớn hơn số tiền tối đa cho phép trong sandbox là {sandboxMax:N0} VND. " +
+                            $"MoMo sandbox chỉ cho phép thanh toán từ {sandboxMin:N0} VND đến {sandboxMax:N0} VND. " +
                             $"Vui lòng thanh toán nhiều lần hoặc bật 'TestModeScaleDown' trong appsettings.json để tự động giảm số tiền khi test.", 
                             nameof(amount));
                     }
@@ -101,8 +105,9 @@ namespace Vehicle_Dealer_Management.BLL.Services
             var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(); // Unix timestamp (10 số)
             var orderIdStr = $"{orderId.ToString().PadLeft(10, '0')}{timestamp}"; // 20 số tổng cộng
             var amountLong = (long)(amount); // MoMo yêu cầu số tiền dạng long
+            var requestType = method == MoMoPaymentMethod.Wallet ? "captureWallet" : "payWithATM";
 
-            var rawHash = $"accessKey={accessKey}&amount={amountLong}&extraData=&ipnUrl={fullNotifyUrl}&orderId={orderIdStr}&orderInfo={orderInfo}&partnerCode={partnerCode}&redirectUrl={fullReturnUrl}&requestId={requestId}&requestType=captureWallet";
+            var rawHash = $"accessKey={accessKey}&amount={amountLong}&extraData=&ipnUrl={fullNotifyUrl}&orderId={orderIdStr}&orderInfo={orderInfo}&partnerCode={partnerCode}&redirectUrl={fullReturnUrl}&requestId={requestId}&requestType={requestType}";
 
             var signature = ComputeHmacSha256(rawHash, secretKey);
 
@@ -120,7 +125,7 @@ namespace Vehicle_Dealer_Management.BLL.Services
                 lang = "vi",
                 autoCapture = true,
                 extraData = "",
-                requestType = "captureWallet",
+                requestType = requestType,
                 signature = signature
             };
 

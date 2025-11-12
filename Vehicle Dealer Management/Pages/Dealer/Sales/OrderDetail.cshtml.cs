@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Vehicle_Dealer_Management.BLL.IService;
+using Vehicle_Dealer_Management.DAL.Constants;
 
 namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
 {
@@ -9,18 +10,22 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
         private readonly ISalesDocumentService _salesDocumentService;
         private readonly IPaymentService _paymentService;
         private readonly IDeliveryService _deliveryService;
+        private readonly IContractService _contractService;
 
         public OrderDetailModel(
             ISalesDocumentService salesDocumentService,
             IPaymentService paymentService,
-            IDeliveryService deliveryService)
+            IDeliveryService deliveryService,
+            IContractService contractService)
         {
             _salesDocumentService = salesDocumentService;
             _paymentService = paymentService;
             _deliveryService = deliveryService;
+            _contractService = contractService;
         }
 
         public OrderDetailViewModel Order { get; set; } = null!;
+        public ContractViewModel? Contract { get; set; }
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
@@ -122,6 +127,20 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
                 RemainingAmount = remainingAmount,
                 TotalAmount = totalAmount
             };
+
+            var contract = await _contractService.GetContractByOrderIdAsync(order.Id);
+            if (contract != null && contract.DealerId == dealerIdInt)
+            {
+                Contract = new ContractViewModel
+                {
+                    Id = contract.Id,
+                    Status = contract.Status,
+                    SignedAt = contract.CustomerSignedAt,
+                    SignatureUrl = contract.CustomerSignatureUrl,
+                    QuoteId = contract.QuoteId,
+                    IsSigned = SalesContractStatus.IsSigned(contract.Status)
+                };
+            }
 
             return Page();
         }
@@ -456,6 +475,16 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
             public string? HandoverNote { get; set; }
             public bool CustomerConfirmed { get; set; }
             public DateTime? CustomerConfirmedDate { get; set; }
+        }
+
+        public class ContractViewModel
+        {
+            public int Id { get; set; }
+            public string Status { get; set; } = "";
+            public DateTime? SignedAt { get; set; }
+            public string? SignatureUrl { get; set; }
+            public int QuoteId { get; set; }
+            public bool IsSigned { get; set; }
         }
     }
 }

@@ -288,6 +288,53 @@
 
     <!-- Right Column: Payments & Delivery -->
     <div>
+        <!-- Contract Information -->
+        @if (Model.Contract != null)
+        {
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="card-title">Hợp đồng mua xe</h3>
+                </div>
+                <div class="card-body">
+                    <div style="margin-bottom: 0.75rem;">
+                        <div class="text-muted" style="font-size: 0.875rem;">Mã hợp đồng</div>
+                        <div><strong>#@Model.Contract.Id</strong></div>
+                    </div>
+                    <div style="margin-bottom: 0.75rem;">
+                        <div class="text-muted" style="font-size: 0.875rem;">Trạng thái</div>
+                        <div>@await Html.PartialAsync("_StatusBadge", Model.Contract.Status)</div>
+                    </div>
+                    @if (Model.Contract.SignedAt.HasValue)
+                    {
+                        <div style="margin-bottom: 0.75rem;">
+                            <div class="text-muted" style="font-size: 0.875rem;">Đã ký lúc</div>
+                            <div>@Model.Contract.SignedAt.Value.ToString("dd/MM/yyyy HH:mm")</div>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Contract.SignatureUrl))
+                    {
+                        <div style="margin-bottom: 0.75rem;">
+                            <a href="@Model.Contract.SignatureUrl" target="_blank" class="btn btn-light btn-sm">
+                                <i class="bi bi-image"></i> Xem ảnh chữ ký
+                            </a>
+                        </div>
+                    }
+                    @if (Model.Contract.IsSigned)
+                    {
+                        <div class="alert alert-success" style="margin: 0;">
+                            <i class="bi bi-check-circle"></i> Hợp đồng đã được ký. Bạn có thể thanh toán online hoặc chuẩn bị thanh toán tiền mặt tại đại lý.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning" style="margin: 0;">
+                            <i class="bi bi-exclamation-triangle"></i> Hợp đồng chưa hoàn tất chữ ký. Vui lòng tải chữ ký trong phần báo giá trước khi thanh toán.
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
         <!-- Payment History -->
         <div class="card mb-4">
             <div class="card-header">
@@ -347,7 +394,7 @@
                         <div class="empty-state-icon">💰</div>
                         <div class="empty-state-title">Chưa có thanh toán</div>
                         <div class="empty-state-text">Thanh toán online để hoàn tất đơn hàng</div>
-                        @if (Model.Order.RemainingAmount > 0)
+                        @if (Model.Order.RemainingAmount > 0 && Model.Contract?.IsSigned == true)
                         {
                             <div style="margin-top: 1.5rem;">
                                 <a href="/Customer/Payment/Checkout?orderId=@Model.Order.Id" class="btn btn-primary">
@@ -355,10 +402,51 @@
                                 </a>
                             </div>
                         }
+                        else if (Model.Contract?.IsSigned != true)
+                        {
+                            <div style="margin-top: 1.5rem;" class="alert alert-warning">
+                                <i class="bi bi-lock"></i> Thanh toán sẽ mở khi hợp đồng hoàn tất chữ ký.
+                            </div>
+                        }
                     </div>
                 }
             </div>
         </div>
+
+        @if (Model.Contract?.IsSigned == true && Model.Order.RemainingAmount > 0)
+        {
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="card-title">Thanh toán tiền mặt</h3>
+                </div>
+                <div class="card-body">
+                    <p style="margin-bottom: 0.75rem;">
+                        Bạn có thể thanh toán phần còn lại <strong>@Model.Order.RemainingAmount.ToString("N0") VND</strong> trực tiếp tại đại lý.
+                    </p>
+                    <ul style="padding-left: 1.2rem; margin-bottom: 1rem; color: var(--text-muted);">
+                        <li>Mang theo CMND/CCCD và bản hợp đồng đã ký.</li>
+                        <li>Thanh toán tại quầy thu ngân hoặc liên hệ nhân viên phụ trách đơn hàng.</li>
+                        <li>Đơn hàng sẽ được cập nhật sau khi đại lý xác nhận đã nhận tiền mặt.</li>
+                    </ul>
+                    <a href="tel:@Model.Order.DealerPhone" class="btn btn-outline-primary" style="width: 100%;">
+                        <i class="bi bi-telephone"></i> Gọi cho đại lý: @Model.Order.DealerPhone
+                    </a>
+                </div>
+            </div>
+        }
+        else if (Model.Contract != null && !Model.Contract.IsSigned && Model.Order.RemainingAmount > 0)
+        {
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="card-title">Thanh toán tiền mặt</h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning" style="margin: 0;">
+                        <i class="bi bi-lock"></i> Vui lòng hoàn tất ký hợp đồng để mở khóa thanh toán tiền mặt.
+                    </div>
+                </div>
+            </div>
+        }
 
         <!-- Delivery Information -->
         <div class="card">

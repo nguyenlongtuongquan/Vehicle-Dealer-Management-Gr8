@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.BLL.IService;
+using Vehicle_Dealer_Management.DAL.Constants;
 using Vehicle_Dealer_Management.DAL.Data;
 
 namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
@@ -9,17 +10,65 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
     public class QuoteDetailModel : PageModel
     {
         private readonly ISalesDocumentService _salesDocumentService;
+        private readonly IContractService _contractService;
         private readonly ApplicationDbContext _context; // Cần cho SalesDocumentLine khi convert
 
         public QuoteDetailModel(
             ISalesDocumentService salesDocumentService,
+            IContractService contractService,
             ApplicationDbContext context)
         {
             _salesDocumentService = salesDocumentService;
+            _contractService = contractService;
             _context = context;
         }
 
+        public async Task<IActionResult> OnPostCreateContractAsync(int id)
+        {
+            var dealerId = HttpContext.Session.GetString("DealerId");
+            var userId = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrEmpty(dealerId) || string.IsNullOrEmpty(userId))
+            {
+                return RedirectToPage("/Auth/Login");
+            }
+
+            var dealerIdInt = int.Parse(dealerId);
+            var userIdInt = int.Parse(userId);
+
+            var quote = await _salesDocumentService.GetSalesDocumentWithDetailsAsync(id);
+            if (quote == null || quote.DealerId != dealerIdInt || quote.Type != "QUOTE")
+            {
+                return NotFound();
+            }
+
+            if (quote.Status != "ACCEPTED" && quote.Status != "CONVERTED")
+            {
+                TempData["Error"] = "Chỉ có thể tạo hợp đồng khi báo giá đã được khách hàng chấp nhận.";
+                return RedirectToPage(new { id });
+            }
+
+            var existing = await _contractService.GetContractByQuoteIdAsync(id);
+            if (existing != null)
+            {
+                TempData["Info"] = "Báo giá này đã có hợp đồng.";
+                return RedirectToPage(new { id });
+            }
+
+            try
+            {
+                await _contractService.CreateContractAsync(id, userIdInt);
+                TempData["Success"] = "Đã tạo hợp đồng và gửi thông tin cho khách hàng ký.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return RedirectToPage(new { id });
+        }
+
         public QuoteDetailViewModel Quote { get; set; } = null!;
+        public ContractSummaryViewModel? Contract { get; set; }
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
@@ -96,6 +145,20 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
                 TotalAmount = totalAmount
             };
 
+            var contract = await _contractService.GetContractByQuoteIdAsync(quote.Id);
+            if (contract != null)
+            {
+                Contract = new ContractSummaryViewModel
+                {
+                    Id = contract.Id,
+                    Status = contract.Status,
+                    CreatedAt = contract.CreatedAt,
+                    CustomerSignedAt = contract.CustomerSignedAt,
+                    CustomerSignatureUrl = contract.CustomerSignatureUrl,
+                    OrderId = contract.OrderId
+                };
+            }
+
             return Page();
         }
 
@@ -119,6 +182,13 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
             if (quote == null)
             {
                 return NotFound();
+            }
+
+            var contract = await _contractService.GetContractByQuoteIdAsync(quote.Id);
+            if (contract == null || !SalesContractStatus.IsSigned(contract.Status))
+            {
+                TempData["Error"] = "Cần có hợp đồng đã ký bởi khách hàng trước khi chuyển báo giá thành đơn hàng.";
+                return RedirectToPage(new { id });
             }
 
             // Validate quote can be converted - chỉ cho phép khi customer đã chấp nhận
@@ -221,6 +291,11 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
             quote.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+
+            if (contract != null)
+            {
+                await _contractService.MarkContractLinkedToOrderAsync(contract.Id, order.Id);
+            }
 
             TempData["Success"] = "Chuyển đổi báo giá thành đơn hàng thành công!";
             return RedirectToPage("/Dealer/Sales/OrderDetail", new { id = order.Id });
@@ -334,6 +409,16 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
             public decimal DiscountValue { get; set; }
             public decimal LineTotal { get; set; }
             public string? VehicleImageUrl { get; set; }
+        }
+
+        public class ContractSummaryViewModel
+        {
+            public int Id { get; set; }
+            public string Status { get; set; } = "";
+            public DateTime CreatedAt { get; set; }
+            public DateTime? CustomerSignedAt { get; set; }
+            public string? CustomerSignatureUrl { get; set; }
+            public int? OrderId { get; set; }
         }
     }
 }

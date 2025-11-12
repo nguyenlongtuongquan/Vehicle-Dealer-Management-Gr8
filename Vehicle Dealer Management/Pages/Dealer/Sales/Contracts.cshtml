@@ -1,0 +1,101 @@
+@page "/Dealer/Sales/Contracts"
+@model Vehicle_Dealer_Management.Pages.Dealer.Sales.ContractsModel
+@{
+    ViewData["Title"] = "Quản lý hợp đồng";
+}
+
+@await Html.PartialAsync("_PageHeader")
+
+<div class="content-header">
+    <div>
+        <h1 class="content-title">Quản lý hợp đồng</h1>
+        <p class="content-subtitle">Theo dõi trạng thái hợp đồng và chữ ký của khách hàng</p>
+    </div>
+    <a href="/Dealer/Dashboard" class="btn btn-secondary">
+        <i class="bi bi-house"></i> Trang chủ dealer
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Danh sách hợp đồng</h3>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        @if (Model.Contracts.Any())
+        {
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Khách hàng</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày tạo</th>
+                            <th>Ngày khách ký</th>
+                            <th>Chữ ký</th>
+                            <th>Liên kết</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var contract in Model.Contracts)
+                        {
+                            <tr>
+                                <td><strong>@contract.Id</strong></td>
+                                <td>@contract.CustomerName</td>
+                                <td>@await Html.PartialAsync("_StatusBadge", contract.Status)</td>
+                                <td>@contract.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>
+                                    @if (contract.SignedAt.HasValue)
+                                    {
+                                        @contract.SignedAt.Value.ToString("dd/MM/yyyy HH:mm")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Chưa ký</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(contract.SignatureUrl))
+                                    {
+                                        <a href="@contract.SignatureUrl" target="_blank" class="btn btn-light btn-sm">
+                                            <i class="bi bi-image"></i> Xem
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">---</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <a class="btn btn-outline-primary btn-sm" href="/Dealer/Sales/QuoteDetail?id=@contract.QuoteId">
+                                            <i class="bi bi-file-text"></i> Báo giá
+                                        </a>
+                                        @if (contract.OrderId.HasValue)
+                                        {
+                                            <a class="btn btn-outline-success btn-sm" href="/Dealer/Sales/OrderDetail?id=@contract.OrderId.Value">
+                                                <i class="bi bi-box-seam"></i> Đơn hàng
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="bi bi-file-earmark"></i>
+                </div>
+                <div class="empty-state-title">Chưa có hợp đồng nào</div>
+                <div class="empty-state-subtitle">Khi khách hàng chấp nhận báo giá, bạn có thể tạo hợp đồng tại trang chi tiết báo giá.</div>
+            </div>
+        }
+    </div>
+</div>
+
+

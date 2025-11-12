@@ -24,6 +24,7 @@ namespace Vehicle_Dealer_Management.DAL.Data
         // Sales
         public DbSet<SalesDocument> SalesDocuments { get; set; }
         public DbSet<SalesDocumentLine> SalesDocumentLines { get; set; }
+        public DbSet<SalesContract> SalesContracts { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Delivery> Deliveries { get; set; }
         public DbSet<Promotion> Promotions { get; set; }
@@ -98,6 +99,32 @@ namespace Vehicle_Dealer_Management.DAL.Data
             {
                 entity.HasIndex(e => new { e.Type, e.DealerId, e.Status, e.CreatedAt });
                 entity.HasIndex(e => new { e.CustomerId, e.CreatedAt });
+            });
+
+            modelBuilder.Entity<SalesContract>(entity =>
+            {
+                entity.HasIndex(e => new { e.QuoteId }).IsUnique();
+                entity.HasIndex(e => new { e.DealerId, e.Status });
+                entity.HasIndex(e => new { e.CustomerId, e.Status });
+                entity.HasOne(e => e.Quote)
+                      .WithMany()
+                      .HasForeignKey(e => e.QuoteId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Order)
+                      .WithMany()
+                      .HasForeignKey(e => e.OrderId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Dealer)
+                      .WithMany()
+                      .HasForeignKey(e => e.DealerId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Customer)
+                      .WithMany()
+                      .HasForeignKey(e => e.CustomerId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
 
             // Configure SalesDocumentLine

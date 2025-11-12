@@ -174,6 +174,75 @@
                 </div>
             </div>
         }
+
+        @if (Model.Contract != null)
+        {
+            var contractStatus = Model.Contract.Status;
+            var canUpload = contractStatus == "PENDING_SIGNATURE";
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3 class="card-title">Hợp đồng mua xe</h3>
+                </div>
+                <div class="card-body">
+                    <div style="margin-bottom: 0.75rem;">
+                        <div class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.25rem;">Mã hợp đồng</div>
+                        <div><strong>#@Model.Contract.Id</strong></div>
+                    </div>
+                    <div style="margin-bottom: 0.75rem;">
+                        <div class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.25rem;">Trạng thái</div>
+                        <div>@await Html.PartialAsync("_StatusBadge", contractStatus)</div>
+                    </div>
+                    @if (Model.Contract.CustomerSignedAt.HasValue)
+                    {
+                        <div style="margin-bottom: 0.75rem;">
+                            <div class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.25rem;">Bạn đã ký lúc</div>
+                            <div>@Model.Contract.CustomerSignedAt.Value.ToString("dd/MM/yyyy HH:mm")</div>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Contract.CustomerSignatureUrl))
+                    {
+                        <div style="margin-bottom: 0.75rem;">
+                            <a href="@Model.Contract.CustomerSignatureUrl" target="_blank" class="btn btn-light">
+                                <i class="bi bi-image"></i> Xem ảnh chữ ký
+                            </a>
+                        </div>
+                    }
+                    @if (canUpload)
+                    {
+                        <form method="post" asp-page-handler="UploadSignature" enctype="multipart/form-data">
+                            <input type="hidden" name="id" value="@Model.Quote.Id" />
+                            <div class="form-group">
+                                <label for="signatureFile" class="form-label">Tải ảnh chữ ký (PNG/JPG)</label>
+                                <input type="file" name="signatureFile" id="signatureFile" class="form-control" accept=".png,.jpg,.jpeg" required />
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.75rem;">
+                                <i class="bi bi-upload"></i> Gửi chữ ký
+                            </button>
+                            <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Dealer sẽ xác nhận chữ ký trước khi tiếp tục quy trình đặt xe.</p>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info" style="margin: 0;">
+                            Dealer đã ghi nhận hợp đồng này. Vui lòng đợi để tiếp tục các bước tiếp theo.
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        else if (Model.Quote.Status == "ACCEPTED")
+        {
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3 class="card-title">Hợp đồng mua xe</h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info" style="margin: 0;">
+                        Dealer đang chuẩn bị hợp đồng cho bạn. Vui lòng kiểm tra lại sau.
+                    </div>
+                </div>
+            </div>
+        }
     </div>
 </div>
 

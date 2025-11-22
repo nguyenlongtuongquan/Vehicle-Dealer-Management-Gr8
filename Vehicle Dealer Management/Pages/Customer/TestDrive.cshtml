@@ -87,9 +87,9 @@
                                 onclick="openEditModal(this)">
                             <i class="bi bi-pencil"></i> Sửa
                         </button>
-                        <form method="post" asp-page-handler="Cancel" style="display: inline;" onsubmit="return confirm('Bạn có chắc chắn muốn hủy lịch lái thử này?');">
+                        <form method="post" asp-page-handler="Cancel" id="cancelForm@(td.Id)" style="display: inline;">
                             <input type="hidden" name="testDriveId" value="@td.Id" />
-                            <button type="submit" class="btn btn-danger btn-sm">
+                            <button type="button" class="btn btn-danger btn-sm" onclick="showConfirmModal('Hủy lịch lái thử', 'Bạn có chắc chắn muốn hủy lịch lái thử này? Hành động này không thể hoàn tác.', function() { document.getElementById('cancelForm@(td.Id)').submit(); }, 'Xác nhận hủy', 'Hủy', 'danger');">
                                 <i class="bi bi-x-circle"></i> Hủy lịch
                             </button>
                         </form>

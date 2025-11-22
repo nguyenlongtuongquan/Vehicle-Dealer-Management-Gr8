@@ -11,6 +11,14 @@ namespace Vehicle_Dealer_Management.DAL.Repositories
         {
         }
 
+        public override async Task<Feedback?> GetByIdAsync(int id)
+        {
+            return await _context.Feedbacks
+                .Include(f => f.Customer)
+                .Include(f => f.ReplyByUser)
+                .FirstOrDefaultAsync(f => f.Id == id);
+        }
+
         public async Task<IEnumerable<Feedback>> GetFeedbacksByCustomerIdAsync(int customerId)
         {
             return await _context.Feedbacks
@@ -25,6 +33,7 @@ namespace Vehicle_Dealer_Management.DAL.Repositories
             return await _context.Feedbacks
                 .Where(f => f.DealerId == dealerId)
                 .Include(f => f.Customer)
+                .Include(f => f.ReplyByUser)
                 .OrderByDescending(f => f.CreatedAt)
                 .ToListAsync();
         }
@@ -40,6 +49,7 @@ namespace Vehicle_Dealer_Management.DAL.Repositories
 
             return await query
                 .Include(f => f.Customer)
+                .Include(f => f.ReplyByUser)
                 .OrderByDescending(f => f.CreatedAt)
                 .ToListAsync();
         }
@@ -55,6 +65,7 @@ namespace Vehicle_Dealer_Management.DAL.Repositories
 
             return await query
                 .Include(f => f.Customer)
+                .Include(f => f.ReplyByUser)
                 .OrderByDescending(f => f.CreatedAt)
                 .ToListAsync();
         }

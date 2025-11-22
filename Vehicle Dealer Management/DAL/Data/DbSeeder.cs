@@ -740,6 +740,123 @@ namespace Vehicle_Dealer_Management.DAL.Data
                     }
                 }
             }
+
+            // Seed sample Feedbacks và Complaints với reply
+            if (!context.Feedbacks.Any(f => f.Type == "FEEDBACK" || f.Type == "COMPLAINT"))
+            {
+                var customers = context.CustomerProfiles.ToList();
+                var dealers = context.Dealers.ToList();
+                var dealerStaff = context.Users
+                    .Include(u => u.Role)
+                    .Where(u => u.DealerId.HasValue && u.Role != null && u.Role.Code == "DEALER_STAFF")
+                    .FirstOrDefault();
+
+                if (customers.Any() && dealers.Any())
+                {
+                    var feedbacks = new List<Feedback>();
+
+                    // Feedback 1: Có reply từ dealer staff
+                    if (customers.Count > 0 && dealers.Count > 0 && dealerStaff != null)
+                    {
+                        feedbacks.Add(new Feedback
+                        {
+                            Type = "FEEDBACK",
+                            Status = "IN_PROGRESS",
+                            CustomerId = customers[0].Id,
+                            DealerId = dealers[0].Id,
+                            Content = "Tôi muốn đề xuất thêm nhiều màu sắc hơn cho dòng xe này. Hiện tại chỉ có vài màu cơ bản.",
+                            CreatedAt = DateTime.UtcNow.AddDays(-7),
+                            UpdatedAt = DateTime.UtcNow.AddDays(-6),
+                            ReplyContent = "Cảm ơn bạn đã góp ý! Chúng tôi sẽ xem xét và bổ sung thêm các màu sắc mới trong các đợt sản xuất tiếp theo. Chúng tôi sẽ thông báo khi có màu mới.",
+                            ReplyByUserId = dealerStaff.Id,
+                            ReplyAt = DateTime.UtcNow.AddDays(-6),
+                            ResolvedAt = null
+                        });
+                    }
+
+                    // Feedback 2: Chưa có reply
+                    if (customers.Count > 1 && dealers.Count > 0)
+                    {
+                        feedbacks.Add(new Feedback
+                        {
+                            Type = "FEEDBACK",
+                            Status = "NEW",
+                            CustomerId = customers.Count > 1 ? customers[1].Id : customers[0].Id,
+                            DealerId = dealers[0].Id,
+                            Content = "Website rất dễ sử dụng, nhưng tôi muốn có thêm tính năng so sánh xe trực tiếp trên website.",
+                            CreatedAt = DateTime.UtcNow.AddDays(-2),
+                            UpdatedAt = null,
+                            ReplyContent = null,
+                            ReplyByUserId = null,
+                            ReplyAt = null,
+                            ResolvedAt = null
+                        });
+                    }
+
+                    // Complaint 1: Có reply và đã resolved
+                    if (customers.Count > 0 && dealers.Count > 0 && dealerStaff != null)
+                    {
+                        feedbacks.Add(new Feedback
+                        {
+                            Type = "COMPLAINT",
+                            Status = "RESOLVED",
+                            CustomerId = customers[0].Id,
+                            DealerId = dealers[0].Id,
+                            Content = "Tôi đã đặt hàng nhưng chưa nhận được thông báo xác nhận qua email. Vui lòng kiểm tra lại.",
+                            CreatedAt = DateTime.UtcNow.AddDays(-10),
+                            UpdatedAt = DateTime.UtcNow.AddDays(-9),
+                            ReplyContent = "Xin lỗi vì sự bất tiện này. Chúng tôi đã kiểm tra và gửi lại email xác nhận cho bạn. Vấn đề đã được khắc phục và chúng tôi sẽ đảm bảo không tái diễn trong tương lai.",
+                            ReplyByUserId = dealerStaff.Id,
+                            ReplyAt = DateTime.UtcNow.AddDays(-9),
+                            ResolvedAt = DateTime.UtcNow.AddDays(-9)
+                        });
+                    }
+
+                    // Complaint 2: Đang xử lý, có reply
+                    if (customers.Count > 1 && dealers.Count > 0 && dealerStaff != null)
+                    {
+                        feedbacks.Add(new Feedback
+                        {
+                            Type = "COMPLAINT",
+                            Status = "IN_PROGRESS",
+                            CustomerId = customers.Count > 1 ? customers[1].Id : customers[0].Id,
+                            DealerId = dealers[0].Id,
+                            Content = "Tôi đã thanh toán nhưng chưa thấy cập nhật trạng thái thanh toán trên hệ thống. Vui lòng kiểm tra.",
+                            CreatedAt = DateTime.UtcNow.AddDays(-3),
+                            UpdatedAt = DateTime.UtcNow.AddDays(-2),
+                            ReplyContent = "Chúng tôi đã nhận được khiếu nại của bạn và đang kiểm tra lại thông tin thanh toán. Chúng tôi sẽ cập nhật lại trạng thái trong vòng 24 giờ. Xin cảm ơn sự kiên nhẫn của bạn.",
+                            ReplyByUserId = dealerStaff.Id,
+                            ReplyAt = DateTime.UtcNow.AddDays(-2),
+                            ResolvedAt = null
+                        });
+                    }
+
+                    // Complaint 3: Mới, chưa có reply
+                    if (customers.Count > 0 && dealers.Count > 0)
+                    {
+                        feedbacks.Add(new Feedback
+                        {
+                            Type = "COMPLAINT",
+                            Status = "NEW",
+                            CustomerId = customers[0].Id,
+                            DealerId = dealers[0].Id,
+                            Content = "Tôi muốn hủy đơn hàng nhưng không tìm thấy nút hủy trên website. Vui lòng hỗ trợ.",
+                            CreatedAt = DateTime.UtcNow.AddDays(-1),
+                            UpdatedAt = null,
+                            ReplyContent = null,
+                            ReplyByUserId = null,
+                            ReplyAt = null,
+                            ResolvedAt = null
+                        });
+                    }
+
+                    if (feedbacks.Any())
+                    {
+                        context.Feedbacks.AddRange(feedbacks);
+                        context.SaveChanges();
+                    }
+                }
+            }
         }
     }
 }

@@ -15,10 +15,23 @@ namespace Vehicle_Dealer_Management.Pages.Customer
         }
 
         public List<VehicleViewModel> Vehicles { get; set; } = new();
+        public string? FilterModel { get; set; }
+        public List<string> AvailableModels { get; set; } = new();
 
-        public async Task OnGetAsync()
+        public async Task OnGetAsync(string? filterModel)
         {
+            FilterModel = filterModel;
+            
             var vehicles = await _vehicleService.GetAvailableVehiclesAsync();
+
+            // Get unique model names for filter dropdown
+            AvailableModels = vehicles.Select(v => v.ModelName).Distinct().OrderBy(m => m).ToList();
+
+            // Apply filter if specified
+            if (!string.IsNullOrWhiteSpace(filterModel))
+            {
+                vehicles = vehicles.Where(v => v.ModelName == filterModel);
+            }
 
             foreach (var vehicle in vehicles)
             {

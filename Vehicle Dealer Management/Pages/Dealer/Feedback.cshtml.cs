@@ -8,17 +8,10 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
 {
     public class FeedbackModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
-        private readonly ICustomerService _customerService;
         private readonly IFeedbackService _feedbackService;
 
-        public FeedbackModel(
-            ApplicationDbContext context, 
-            ICustomerService customerService,
-            IFeedbackService feedbackService)
+        public FeedbackModel(IFeedbackService feedbackService)
         {
-            _context = context;
-            _customerService = customerService;
             _feedbackService = feedbackService;
         }
 
@@ -60,22 +53,20 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
             InProgressCount = feedbacksList.Count(f => f.Status == "IN_PROGRESS");
             ResolvedCount = feedbacksList.Count(f => f.Status == "RESOLVED");
 
-            Feedbacks = (await Task.WhenAll(feedbacksList.Select(async f =>
+            // Sử dụng navigation properties đã được include sẵn trong repository
+            // Tránh concurrent access đến DbContext
+            Feedbacks = feedbacksList.Select(f => new FeedbackViewModel
             {
-                var customer = f.CustomerId > 0 
-                    ? await _customerService.GetCustomerByIdAsync(f.CustomerId) 
-                    : null;
-                
-                return new FeedbackViewModel
-                {
-                    Id = f.Id,
-                    CustomerName = customer?.FullName ?? "N/A",
-                    Type = f.Type,
-                    Status = f.Status,
-                    Content = f.Content,
-                    CreatedAt = f.CreatedAt
-                };
-            }))).ToList();
+                Id = f.Id,
+                CustomerName = f.Customer?.FullName ?? "N/A",
+                Type = f.Type,
+                Status = f.Status,
+                Content = f.Content,
+                CreatedAt = f.CreatedAt,
+                ReplyContent = f.ReplyContent,
+                ReplyByUserName = f.ReplyByUser?.FullName ?? "N/A",
+                ReplyAt = f.ReplyAt
+            }).ToList();
 
             return Page();
         }
@@ -92,6 +83,40 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
             return RedirectToPage();
         }
 
+        public async Task<IActionResult> OnPostReplyAsync(int id, string replyContent)
+        {
+            var userId = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrEmpty(userId))
+            {
+                return RedirectToPage("/Auth/Login");
+            }
+
+            var dealerId = HttpContext.Session.GetString("DealerId");
+            if (string.IsNullOrEmpty(dealerId))
+            {
+                return RedirectToPage("/Auth/Login");
+            }
+
+            if (string.IsNullOrWhiteSpace(replyContent))
+            {
+                TempData["Error"] = "Nội dung trả lời không được để trống";
+                return RedirectToPage();
+            }
+
+            try
+            {
+                var userIdInt = int.Parse(userId);
+                await _feedbackService.ReplyToFeedbackAsync(id, replyContent, userIdInt);
+                TempData["Success"] = "Trả lời phản hồi thành công!";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Lỗi: {ex.Message}";
+            }
+
+            return RedirectToPage();
+        }
+
         public class FeedbackViewModel
         {
             public int Id { get; set; }
@@ -100,6 +125,9 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
             public string Status { get; set; } = "";
             public string Content { get; set; } = "";
             public DateTime CreatedAt { get; set; }
+            public string? ReplyContent { get; set; }
+            public string ReplyByUserName { get; set; } = "";
+            public DateTime? ReplyAt { get; set; }
         }
     }
 }

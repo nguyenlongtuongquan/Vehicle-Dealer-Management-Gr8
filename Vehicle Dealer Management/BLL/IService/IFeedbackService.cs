@@ -21,6 +21,9 @@ namespace Vehicle_Dealer_Management.BLL.IService
         Task<bool> HasReviewedAsync(int orderId);
         Task<IEnumerable<Feedback>> GetReviewsByDealerIdAsync(int dealerId);
         Task<double> GetAverageRatingByDealerIdAsync(int dealerId);
+        
+        // Reply methods
+        Task<Feedback> ReplyToFeedbackAsync(int feedbackId, string replyContent, int replyByUserId);
     }
 }
 

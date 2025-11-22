@@ -21,14 +21,25 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
         }
 
         public List<VehicleViewModel> Vehicles { get; set; } = new();
+        public string? SearchQuery { get; set; }
+        public string? FilterModel { get; set; }
+        public string? FilterStatus { get; set; }
+        public List<string> AvailableModels { get; set; } = new();
 
-        public async Task<IActionResult> OnGetAsync()
+        public async Task<IActionResult> OnGetAsync(string? search, string? filterModel, string? filterStatus)
         {
             var dealerId = HttpContext.Session.GetString("DealerId");
             if (string.IsNullOrEmpty(dealerId))
             {
                 return RedirectToPage("/Auth/Login");
             }
+
+            ViewData["UserRole"] = HttpContext.Session.GetString("UserRole") ?? "DEALER_STAFF";
+            ViewData["UserName"] = HttpContext.Session.GetString("UserName") ?? "User";
+
+            SearchQuery = search;
+            FilterModel = filterModel;
+            FilterStatus = filterStatus;
 
             var dealerIdInt = int.Parse(dealerId);
 
@@ -38,13 +49,31 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
             // Group by VehicleId để tránh trùng lặp
             var vehicleGroups = dealerStocks.GroupBy(s => s.VehicleId);
 
+            var allVehicles = new List<VehicleViewModel>();
+            var allVehicleModels = new HashSet<string>();
+
             foreach (var group in vehicleGroups)
             {
                 var vehicleId = group.Key;
 
                 // Get vehicle details
                 var vehicle = await _vehicleService.GetVehicleByIdAsync(vehicleId);
-                if (vehicle == null || vehicle.Status != "AVAILABLE") continue;
+                if (vehicle == null) continue;
+
+                // Collect all model names for filter dropdown (before filtering)
+                allVehicleModels.Add(vehicle.ModelName);
+
+                // Apply status filter
+                if (!string.IsNullOrWhiteSpace(filterStatus))
+                {
+                    if (filterStatus == "available" && vehicle.Status != "AVAILABLE") continue;
+                    if (filterStatus == "coming_soon" && vehicle.Status != "COMING_SOON") continue;
+                }
+                else
+                {
+                    // Default: only show AVAILABLE if no filter
+                    if (vehicle.Status != "AVAILABLE") continue;
+                }
 
                 // Get price policy
                 var pricePolicy = await _pricePolicyService.GetActivePricePolicyAsync(vehicleId, dealerIdInt);
@@ -56,7 +85,7 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
                     Qty = (int)s.Qty
                 }).ToList();
 
-                Vehicles.Add(new VehicleViewModel
+                allVehicles.Add(new VehicleViewModel
                 {
                     Id = vehicle.Id,
                     Name = vehicle.ModelName,
@@ -68,6 +97,27 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
                     AvailableColors = colorStocks
                 });
             }
+
+            // Get unique model names for filter dropdown (from all vehicles, not filtered)
+            AvailableModels = allVehicleModels.OrderBy(m => m).ToList();
+
+            // Apply search filter
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var searchLower = search.ToLower();
+                allVehicles = allVehicles.Where(v => 
+                    v.Name.ToLower().Contains(searchLower) || 
+                    v.Variant.ToLower().Contains(searchLower)
+                ).ToList();
+            }
+
+            // Apply model filter
+            if (!string.IsNullOrWhiteSpace(filterModel))
+            {
+                allVehicles = allVehicles.Where(v => v.Name == filterModel).ToList();
+            }
+
+            Vehicles = allVehicles;
 
             return Page();
         }

@@ -36,6 +36,14 @@ namespace Vehicle_Dealer_Management.DAL.Models
 
         public DateTime? ResolvedAt { get; set; }
 
+        // Reply fields (for dealer to reply to feedback/complaint)
+        [Column(TypeName = "nvarchar(max)")]
+        public string? ReplyContent { get; set; }
+        
+        public int? ReplyByUserId { get; set; }
+        
+        public DateTime? ReplyAt { get; set; }
+
         // Navigation properties
         [ForeignKey("CustomerId")]
         public virtual CustomerProfile? Customer { get; set; }
@@ -45,6 +53,9 @@ namespace Vehicle_Dealer_Management.DAL.Models
 
         [ForeignKey("OrderId")]
         public virtual SalesDocument? Order { get; set; }
+
+        [ForeignKey("ReplyByUserId")]
+        public virtual User? ReplyByUser { get; set; }
     }
 }
 

@@ -18,6 +18,34 @@
     </div>
 </div>
 
+<!-- Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="flex gap-2">
+            <select name="filterModel" class="form-control" style="max-width: 300px;" onchange="this.form.submit()">
+                <option value="">Tất cả mẫu xe</option>
+                @foreach (var modelItem in Model.AvailableModels)
+                {
+                    @if (Model.FilterModel == modelItem)
+                    {
+                        <option value="@modelItem" selected>@modelItem</option>
+                    }
+                    else
+                    {
+                        <option value="@modelItem">@modelItem</option>
+                    }
+                }
+            </select>
+            @if (!string.IsNullOrEmpty(Model.FilterModel))
+            {
+                <a href="/Customer/Vehicles" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Xóa bộ lọc
+                </a>
+            }
+        </form>
+    </div>
+</div>
+
 <div class="grid grid-cols-3">
     @foreach (var vehicle in Model.Vehicles)
     {

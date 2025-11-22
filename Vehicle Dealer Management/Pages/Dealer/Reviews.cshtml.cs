@@ -43,7 +43,7 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
             Reviews = reviews.Select(r => new ReviewViewModel
             {
                 Id = r.Id,
-                OrderId = r.OrderId ?? 0,
+                OrderId = r.OrderId,
                 OrderNumber = r.OrderId.HasValue ? $"ORD-{r.OrderId.Value:D6}" : "N/A",
                 CustomerName = r.Customer?.FullName ?? "N/A",
                 Rating = r.Rating ?? 0,
@@ -58,7 +58,7 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
         public class ReviewViewModel
         {
             public int Id { get; set; }
-            public int OrderId { get; set; }
+            public int? OrderId { get; set; }
             public string OrderNumber { get; set; } = "";
             public string CustomerName { get; set; } = "";
             public int Rating { get; set; }

@@ -167,6 +167,41 @@ namespace Vehicle_Dealer_Management.BLL.Services
         {
             return await _feedbackRepository.GetAverageRatingByDealerIdAsync(dealerId);
         }
+
+        // Reply methods
+        public async Task<Feedback> ReplyToFeedbackAsync(int feedbackId, string replyContent, int replyByUserId)
+        {
+            if (string.IsNullOrWhiteSpace(replyContent))
+            {
+                throw new ArgumentException("Reply content is required", nameof(replyContent));
+            }
+
+            var feedback = await _feedbackRepository.GetByIdAsync(feedbackId);
+            if (feedback == null)
+            {
+                throw new KeyNotFoundException($"Feedback with ID {feedbackId} not found");
+            }
+
+            // Only allow replying to FEEDBACK and COMPLAINT types, not REVIEW
+            if (feedback.Type == "REVIEW")
+            {
+                throw new InvalidOperationException("Cannot reply to reviews");
+            }
+
+            feedback.ReplyContent = replyContent;
+            feedback.ReplyByUserId = replyByUserId;
+            feedback.ReplyAt = DateTime.UtcNow;
+            feedback.UpdatedAt = DateTime.UtcNow;
+
+            // Auto-update status to IN_PROGRESS if it's NEW
+            if (feedback.Status == "NEW")
+            {
+                feedback.Status = "IN_PROGRESS";
+            }
+
+            await _feedbackRepository.UpdateAsync(feedback);
+            return feedback;
+        }
     }
 }
 

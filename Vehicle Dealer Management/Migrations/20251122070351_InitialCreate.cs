@@ -490,7 +490,10 @@ namespace Vehicle_Dealer_Management.Migrations
                     OrderId = table.Column<int>(type: "int", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ResolvedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    ResolvedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ReplyContent = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ReplyByUserId = table.Column<int>(type: "int", nullable: true),
+                    ReplyAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -511,6 +514,11 @@ namespace Vehicle_Dealer_Management.Migrations
                         name: "FK_Feedbacks_SalesDocuments_OrderId",
                         column: x => x.OrderId,
                         principalTable: "SalesDocuments",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Feedbacks_Users_ReplyByUserId",
+                        column: x => x.ReplyByUserId,
+                        principalTable: "Users",
                         principalColumn: "Id");
                 });
 
@@ -699,6 +707,11 @@ namespace Vehicle_Dealer_Management.Migrations
                 name: "IX_Feedbacks_OrderId",
                 table: "Feedbacks",
                 column: "OrderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Feedbacks_ReplyByUserId",
+                table: "Feedbacks",
+                column: "ReplyByUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Feedbacks_Type_OrderId",

@@ -351,6 +351,15 @@ namespace Vehicle_Dealer_Management.Migrations
                     b.Property<int?>("Rating")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("ReplyAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ReplyByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ReplyContent")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime?>("ResolvedAt")
                         .HasColumnType("datetime2");
 
@@ -370,6 +379,8 @@ namespace Vehicle_Dealer_Management.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("OrderId");
+
+                    b.HasIndex("ReplyByUserId");
 
                     b.HasIndex("CustomerId", "CreatedAt");
 
@@ -1064,11 +1075,17 @@ namespace Vehicle_Dealer_Management.Migrations
                         .WithMany()
                         .HasForeignKey("OrderId");
 
+                    b.HasOne("Vehicle_Dealer_Management.DAL.Models.User", "ReplyByUser")
+                        .WithMany()
+                        .HasForeignKey("ReplyByUserId");
+
                     b.Navigation("Customer");
 
                     b.Navigation("Dealer");
 
                     b.Navigation("Order");
+
+                    b.Navigation("ReplyByUser");
                 });
 
             modelBuilder.Entity("Vehicle_Dealer_Management.DAL.Models.Notification", b =>

@@ -69,9 +69,16 @@ else
                             <div style="flex: 1;">
                                 <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
                                     <div style="font-size: 1.125rem; font-weight: 600;">@review.CustomerName</div>
-                                    <a href="/Dealer/Sales/OrderDetail?id=@review.OrderId" style="color: var(--accent-cyan); text-decoration: none; font-size: 0.875rem;">
-                                        @review.OrderNumber
-                                    </a>
+                                    @if (review.OrderId.HasValue && review.OrderId.Value > 0)
+                                    {
+                                        <a href="/Dealer/Sales/OrderDetail?id=@review.OrderId.Value" style="color: var(--accent-cyan); text-decoration: none; font-size: 0.875rem;">
+                                            @review.OrderNumber
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span style="color: var(--text-muted); font-size: 0.875rem;">@review.OrderNumber</span>
+                                    }
                                 </div>
                                 <div class="text-muted" style="font-size: 0.875rem;">
                                     @review.CreatedAt.ToString("dd/MM/yyyy HH:mm")
@@ -94,11 +101,14 @@ else
                                 @review.Content
                             </div>
                         }
-                        <div style="margin-top: 1rem;">
-                            <a href="/Dealer/Sales/OrderDetail?id=@review.OrderId" class="btn btn-secondary btn-sm">
-                                <i class="bi bi-eye"></i> Xem đơn hàng
-                            </a>
-                        </div>
+                        @if (review.OrderId.HasValue && review.OrderId.Value > 0)
+                        {
+                            <div style="margin-top: 1rem;">
+                                <a href="/Dealer/Sales/OrderDetail?id=@review.OrderId.Value" class="btn btn-secondary btn-sm">
+                                    <i class="bi bi-eye"></i> Xem đơn hàng
+                                </a>
+                            </div>
+                        }
                     </div>
                 }
             </div>

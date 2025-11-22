@@ -28,29 +28,59 @@
 <!-- Filters -->
 <div class="card mb-4">
     <div class="card-body">
-        <div class="grid grid-cols-4 gap-2">
+        <form method="get" class="grid grid-cols-4 gap-2">
             <div class="form-group mb-0">
-                <input type="text" class="form-control" placeholder="Tìm kiếm xe..." />
+                <input type="text" name="search" class="form-control" placeholder="Tìm kiếm xe..." value="@Model.SearchQuery" />
             </div>
             <div class="form-group mb-0">
-                <select class="form-control">
-                    <option>Tất cả mẫu xe</option>
-                    <option>Model S</option>
-                    <option>Model 3</option>
-                    <option>Model X</option>
+                <select name="filterModel" class="form-control">
+                    <option value="">Tất cả mẫu xe</option>
+                    @foreach (var modelItem in Model.AvailableModels)
+                    {
+                        @if (Model.FilterModel == modelItem)
+                        {
+                            <option value="@modelItem" selected>@modelItem</option>
+                        }
+                        else
+                        {
+                            <option value="@modelItem">@modelItem</option>
+                        }
+                    }
                 </select>
             </div>
             <div class="form-group mb-0">
-                <select class="form-control">
-                    <option>Tất cả trạng thái</option>
-                    <option>Có sẵn</option>
-                    <option>Sắp ra mắt</option>
+                <select name="filterStatus" class="form-control">
+                    <option value="">Tất cả trạng thái</option>
+                    @if (Model.FilterStatus == "available")
+                    {
+                        <option value="available" selected>Có sẵn</option>
+                    }
+                    else
+                    {
+                        <option value="available">Có sẵn</option>
+                    }
+                    @if (Model.FilterStatus == "coming_soon")
+                    {
+                        <option value="coming_soon" selected>Sắp ra mắt</option>
+                    }
+                    else
+                    {
+                        <option value="coming_soon">Sắp ra mắt</option>
+                    }
                 </select>
             </div>
-            <button class="btn btn-primary">
-                <i class="bi bi-search"></i> Tìm kiếm
-            </button>
-        </div>
+            <div class="flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Tìm kiếm
+                </button>
+                @if (!string.IsNullOrEmpty(Model.SearchQuery) || !string.IsNullOrEmpty(Model.FilterModel) || !string.IsNullOrEmpty(Model.FilterStatus))
+                {
+                    <a href="/Dealer/Vehicles" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Xóa bộ lọc
+                    </a>
+                }
+            </div>
+        </form>
     </div>
 </div>
 
